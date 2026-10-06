@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connect Four | My Online Games</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        align-items: center;
+        background: linear-gradient(135deg, #14213d, #000000);
+        color: #ffffff;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+        min-height: 100vh;
+        padding: 1.5rem;
+      }
+
+      main {
+        max-width: 42rem;
+        text-align: center;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: clamp(2.25rem, 8vw, 4rem);
+        margin: 0;
+      }
+
+      .subtitle {
+        color: #d8e2f2;
+        margin: 0.5rem 0 1.25rem;
+      }
+
+      #status {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin: 0 0 1rem;
+        min-height: 1.5em;
+      }
+
+      .board {
+        background: #1460c4;
+        border: 0.55rem solid #0d3e81;
+        border-radius: 1rem;
+        display: grid;
+        gap: clamp(0.25rem, 1vw, 0.55rem);
+        grid-template-columns: repeat(7, 1fr);
+        padding: clamp(0.25rem, 1vw, 0.55rem);
+      }
+
+      .cell {
+        aspect-ratio: 1;
+        background: #f5f5f5;
+        border: 0;
+        border-radius: 50%;
+        box-shadow: inset 0.2rem 0.2rem 0.35rem #b9b9b9;
+        cursor: pointer;
+        padding: 0;
+        transition: transform 120ms ease;
+      }
+
+      .cell:hover:not(:disabled),
+      .cell:focus-visible:not(:disabled) {
+        outline: 0.2rem solid #fca311;
+        outline-offset: 0.1rem;
+        transform: translateY(-0.15rem);
+      }
+
+      .cell:disabled {
+        cursor: default;
+      }
+
+      .red {
+        background: #e63946;
+        box-shadow: inset 0.2rem 0.2rem 0.35rem #a51e2a;
+      }
+
+      .yellow {
+        background: #ffcf33;
+        box-shadow: inset 0.2rem 0.2rem 0.35rem #c69b00;
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 1.25rem;
+      }
+
+      a,
+      button {
+        border: 0;
+        border-radius: 0.65rem;
+        cursor: pointer;
+        font: inherit;
+        font-weight: bold;
+        padding: 0.8rem 1.1rem;
+      }
+
+      #restart {
+        background: #fca311;
+        color: #14213d;
+      }
+
+      #restart:hover,
+      #restart:focus-visible {
+        background: #ffffff;
+      }
+
+      a {
+        color: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Connect Four</h1>
+      <p class="subtitle">Drop your pieces and connect four in a row to win.</p>
+      <p id="status" aria-live="polite">Red player's turn</p>
+      <div class="board" id="board" aria-label="Connect Four game board"></div>
+      <div class="controls">
+        <button id="restart" type="button">New game</button>
+        <a href="index.html">All games</a>
+      </div>
+    </main>
+
+    <script>
+      const rows = 6;
+      const columns = 7;
+      const board = Array.from({ length: rows }, () => Array(columns).fill(null));
+      const boardElement = document.querySelector("#board");
+      const statusElement = document.querySelector("#status");
+      const restartButton = document.querySelector("#restart");
+      let currentPlayer;
+      let gameOver;
+
+      function playerName(player) {
+        return player === "red" ? "Red" : "Yellow";
+      }
+
+      function createBoard() {
+        boardElement.innerHTML = "";
+
+        for (let row = 0; row < rows; row += 1) {
+          for (let column = 0; column < columns; column += 1) {
+            const cell = document.createElement("button");
+            cell.className = "cell";
+            cell.type = "button";
+            cell.dataset.row = row;
+            cell.dataset.column = column;
+            cell.setAttribute("aria-label", `Column ${column + 1}, row ${row + 1}`);
+            cell.addEventListener("click", () => playColumn(column));
+            boardElement.append(cell);
+          }
+        }
+      }
+
+      function getCell(row, column) {
+        return boardElement.querySelector(`[data-row="${row}"][data-column="${column}"]`);
+      }
+
+      function isWinningMove(row, column) {
+        const directions = [
+          [0, 1],
+          [1, 0],
+          [1, 1],
+          [1, -1],
+        ];
+
+        return directions.some(([rowStep, columnStep]) => {
+          let count = 1;
+
+          for (const direction of [-1, 1]) {
+            let nextRow = row + rowStep * direction;
+            let nextColumn = column + columnStep * direction;
+
+            while (
+              nextRow >= 0 &&
+              nextRow < rows &&
+              nextColumn >= 0 &&
+              nextColumn < columns &&
+              board[nextRow][nextColumn] === currentPlayer
+            ) {
+              count += 1;
+              nextRow += rowStep * direction;
+              nextColumn += columnStep * direction;
+            }
+          }
+
+          return count >= 4;
+        });
+      }
+
+      function playColumn(column) {
+        if (gameOver) {
+          return;
+        }
+
+        const row = board.findLastIndex((boardRow) => boardRow[column] === null);
+        if (row === -1) {
+          statusElement.textContent = `Column ${column + 1} is full. Choose another column.`;
+          return;
+        }
+
+        board[row][column] = currentPlayer;
+        const cell = getCell(row, column);
+        cell.classList.add(currentPlayer);
+        cell.setAttribute("aria-label", `${playerName(currentPlayer)} piece in column ${column + 1}, row ${row + 1}`);
+
+        if (isWinningMove(row, column)) {
+          gameOver = true;
+          statusElement.textContent = `${playerName(currentPlayer)} player wins!`;
+          boardElement.querySelectorAll(".cell").forEach((boardCell) => {
+            boardCell.disabled = true;
+          });
+          return;
+        }
+
+        if (board.every((boardRow) => boardRow.every((piece) => piece !== null))) {
+          gameOver = true;
+          statusElement.textContent = "It's a draw!";
+          return;
+        }
+
+        currentPlayer = currentPlayer === "red" ? "yellow" : "red";
+        statusElement.textContent = `${playerName(currentPlayer)} player's turn`;
+      }
+
+      function startGame() {
+        board.forEach((row) => row.fill(null));
+        currentPlayer = "red";
+        gameOver = false;
+        statusElement.textContent = "Red player's turn";
+        createBoard();
+      }
+
+      restartButton.addEventListener("click", startGame);
+      startGame();
+    </script>
+  </body>
+</html>
