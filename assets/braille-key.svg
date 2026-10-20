@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 330" role="img" aria-labelledby="title">
+  <title>Complete Braille alphabet reference card</title>
+  <rect width="420" height="330" rx="16" fill="#a8783e"/>
+  <rect x="14" y="14" width="392" height="302" rx="9" fill="#f1d59b" stroke="#5f3d1e" stroke-width="5"/>
+  <text x="210" y="47" text-anchor="middle" font-family="serif" font-size="27" font-weight="bold" fill="#432e1d">BRAILLE ALPHABET</text>
+  <g font-family="monospace" font-size="25" font-weight="bold" fill="#4f331d">
+    <text x="43" y="86">A ⠁</text><text x="118" y="86">B ⠃</text><text x="193" y="86">C ⠉</text><text x="268" y="86">D ⠙</text><text x="343" y="86">E ⠑</text>
+    <text x="43" y="125">F ⠋</text><text x="118" y="125">G ⠛</text><text x="193" y="125">H ⠓</text><text x="268" y="125">I ⠊</text><text x="343" y="125">J ⠚</text>
+    <text x="43" y="164">K ⠅</text><text x="118" y="164">L ⠇</text><text x="193" y="164">M ⠍</text><text x="268" y="164">N ⠝</text><text x="343" y="164">O ⠕</text>
+    <text x="43" y="203">P ⠏</text><text x="118" y="203">Q ⠟</text><text x="193" y="203">R ⠗</text><text x="268" y="203">S ⠎</text><text x="343" y="203">T ⠞</text>
+    <text x="43" y="242">U ⠥</text><text x="118" y="242">V ⠧</text><text x="193" y="242">W ⠺</text><text x="268" y="242">X ⠭</text><text x="343" y="242">Y ⠽</text>
+    <text x="43" y="281">Z ⠵</text>
+  </g>
+  <path d="M38 296h344" stroke="#8d6537" stroke-width="2"/>
+  <text x="210" y="309" text-anchor="middle" font-family="serif" font-size="14" fill="#725334">raised dots form each letter</text>
+</svg>

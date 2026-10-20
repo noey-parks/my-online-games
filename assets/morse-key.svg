@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 330" role="img" aria-labelledby="title">
+  <title>Complete Morse code alphabet reference card</title>
+  <rect width="420" height="330" rx="16" fill="#ead7a2"/>
+  <rect x="14" y="14" width="392" height="302" rx="9" fill="#fff6d9" stroke="#86653b" stroke-width="5"/>
+  <text x="210" y="47" text-anchor="middle" font-family="serif" font-size="27" font-weight="bold" fill="#432e1d">MORSE ALPHABET</text>
+  <g font-family="monospace" font-size="17" font-weight="bold" fill="#3d2c20">
+    <text x="31" y="82">A .-</text><text x="108" y="82">B -...</text><text x="191" y="82">C -.-.</text><text x="277" y="82">D -..</text><text x="351" y="82">E .</text>
+    <text x="31" y="117">F ..-.</text><text x="108" y="117">G --.</text><text x="191" y="117">H ....</text><text x="277" y="117">I ..</text><text x="351" y="117">J .---</text>
+    <text x="31" y="152">K -.-</text><text x="108" y="152">L .-..</text><text x="191" y="152">M --</text><text x="277" y="152">N -.</text><text x="351" y="152">O ---</text>
+    <text x="31" y="187">P .--.</text><text x="108" y="187">Q --.-</text><text x="191" y="187">R .-.</text><text x="277" y="187">S ...</text><text x="351" y="187">T -</text>
+    <text x="31" y="222">U ..-</text><text x="108" y="222">V ...-</text><text x="191" y="222">W .--</text><text x="277" y="222">X -..-</text><text x="351" y="222">Y -.--</text>
+    <text x="31" y="257">Z --..</text>
+  </g>
+  <path d="M31 276h358" stroke="#8d6537" stroke-width="2"/>
+  <text x="210" y="300" text-anchor="middle" font-family="serif" font-size="15" fill="#725334">short dot / long dash</text>
+</svg>

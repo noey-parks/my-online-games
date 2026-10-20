@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Deep Sea Signal | My Online Games</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        align-items: center;
+        background: radial-gradient(circle at 50% -20%, #155d82, #061626 60%);
+        color: #f0fbff;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        padding: 1.5rem;
+      }
+
+      body::before,
+      body::after {
+        background: rgb(143 232 255 / 20%);
+        border-radius: 50%;
+        content: "";
+        height: 0.7rem;
+        left: 15%;
+        position: fixed;
+        top: 85%;
+        width: 0.7rem;
+        animation: bubble 9s linear infinite;
+      }
+
+      body::after {
+        animation-delay: -4s;
+        left: 83%;
+        transform: scale(1.5);
+      }
+
+      @keyframes bubble {
+        to {
+          opacity: 0;
+          transform: translateY(-105vh) scale(1.8);
+        }
+      }
+
+      main {
+        max-width: 42rem;
+        text-align: center;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: clamp(2.25rem, 8vw, 4rem);
+        margin: 0;
+      }
+
+      .subtitle {
+        color: #b4e9f8;
+        margin: 0.5rem 0 1rem;
+      }
+
+      .hud {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 1rem;
+      }
+
+      .stat {
+        background: rgb(3 24 43 / 75%);
+        border: 0.1rem solid #22698a;
+        border-radius: 0.75rem;
+        padding: 0.65rem;
+      }
+
+      .stat-label {
+        color: #9ed7e8;
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+      }
+
+      .stat-value {
+        font-size: clamp(1.2rem, 4vw, 1.7rem);
+        font-weight: bold;
+      }
+
+      .ocean-window {
+        background: linear-gradient(180deg, rgb(36 134 169 / 35%), rgb(1 15 32 / 90%));
+        border: 0.55rem solid #1f6282;
+        border-radius: 1rem;
+        box-shadow: inset 0 0 2rem rgb(77 213 255 / 20%);
+        min-height: 13rem;
+        overflow: hidden;
+        padding: 1.5rem;
+        position: relative;
+      }
+
+      .submarine {
+        background: #f4b942;
+        border-radius: 2rem 2rem 1rem 1rem;
+        bottom: 1.3rem;
+        height: 2.2rem;
+        left: 50%;
+        position: absolute;
+        transform: translateX(-50%);
+        width: 8rem;
+      }
+
+      .submarine::before {
+        border: 0.25rem solid #f4b942;
+        border-bottom: 0;
+        border-radius: 1rem 1rem 0 0;
+        content: "";
+        height: 1.3rem;
+        left: 2.6rem;
+        position: absolute;
+        top: -1.25rem;
+        width: 2.4rem;
+      }
+
+      .submarine::after {
+        background: #a5eaff;
+        border: 0.2rem solid #173c56;
+        border-radius: 50%;
+        content: "";
+        height: 0.7rem;
+        left: 3.5rem;
+        position: absolute;
+        top: 0.55rem;
+        width: 0.7rem;
+      }
+
+      .signal-creature {
+        color: #a5f3ff;
+        filter: drop-shadow(0 0 0.8rem #58e7ff);
+        font-size: 4rem;
+        left: 50%;
+        opacity: 0.35;
+        position: absolute;
+        top: 2rem;
+        transform: translateX(-50%);
+        transition: opacity 150ms ease, transform 150ms ease;
+      }
+
+      .signal-creature.transmitting {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.25);
+      }
+
+      #message {
+        font-weight: bold;
+        min-height: 1.5em;
+        margin: 0.8rem 0;
+      }
+
+      .signals {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 0 auto 1rem;
+        max-width: 30rem;
+      }
+
+      .signal {
+        align-items: center;
+        border: 0.2rem solid rgb(255 255 255 / 22%);
+        border-radius: 1rem;
+        color: #ffffff;
+        cursor: pointer;
+        display: flex;
+        font: inherit;
+        font-weight: bold;
+        gap: 0.5rem;
+        justify-content: center;
+        min-height: 5.5rem;
+        opacity: 0.85;
+        padding: 0.75rem;
+        transition: opacity 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+      }
+
+      .signal:hover:not(:disabled),
+      .signal:focus-visible:not(:disabled) {
+        opacity: 1;
+        outline: 0.2rem solid #ffffff;
+        outline-offset: 0.15rem;
+      }
+
+      .signal:active:not(:disabled),
+      .signal.flash {
+        box-shadow: 0 0 1.8rem currentColor;
+        opacity: 1;
+        transform: scale(1.06);
+      }
+
+      .signal:disabled {
+        cursor: default;
+      }
+
+      .signal-mark {
+        font-size: 2rem;
+      }
+
+      .blue {
+        background: #176b9c;
+        color: #a8eeff;
+      }
+
+      .purple {
+        background: #6446a8;
+        color: #e2c9ff;
+      }
+
+      .green {
+        background: #237c71;
+        color: #b5ffdf;
+      }
+
+      .orange {
+        background: #ae5e2f;
+        color: #ffe0ae;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+      }
+
+      button,
+      a {
+        border: 0;
+        border-radius: 0.65rem;
+        cursor: pointer;
+        font: inherit;
+        font-weight: bold;
+        padding: 0.8rem 1.1rem;
+      }
+
+      #start {
+        background: #f4b942;
+        color: #182a3a;
+      }
+
+      #start:hover,
+      #start:focus-visible {
+        background: #ffffff;
+      }
+
+      a {
+        color: #ffffff;
+      }
+
+      .help {
+        color: #b4e9f8;
+        line-height: 1.5;
+        margin: 1rem auto 0;
+        max-width: 37rem;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        body::before,
+        body::after {
+          animation: none;
+        }
+
+        .signal,
+        .signal-creature {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Deep Sea Signal</h1>
+      <p class="subtitle">Decode a bioluminescent message to guide your submarine through the deep.</p>
+      <div class="hud">
+        <div class="stat">
+          <span class="stat-label">Depth</span>
+          <span class="stat-value" id="depth">0 m</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Signal</span>
+          <span class="stat-value" id="level">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Best</span>
+          <span class="stat-value" id="best">0</span>
+        </div>
+      </div>
+      <div class="ocean-window">
+        <div class="signal-creature" id="creature" aria-hidden="true">~</div>
+        <div class="submarine" aria-hidden="true"></div>
+      </div>
+      <p id="message" aria-live="polite">Press Start Signal to listen for the first transmission.</p>
+      <div class="signals" id="signals" aria-label="Bioluminescent signal controls">
+        <button class="signal blue" data-signal="0" type="button" disabled><span class="signal-mark">O</span>Azure pulse</button>
+        <button class="signal purple" data-signal="1" type="button" disabled><span class="signal-mark">+</span>Violet pulse</button>
+        <button class="signal green" data-signal="2" type="button" disabled><span class="signal-mark">X</span>Emerald pulse</button>
+        <button class="signal orange" data-signal="3" type="button" disabled><span class="signal-mark">*</span>Amber pulse</button>
+      </div>
+      <div class="controls">
+        <button id="start" type="button">Start signal</button>
+        <a href="index.html">All games</a>
+      </div>
+      <p class="help">Watch the pulses carefully, then repeat the exact order. Every decoded message takes your submarine deeper.</p>
+    </main>
+
+    <script>
+      const signalButtons = [...document.querySelectorAll("[data-signal]")];
+      const creatureElement = document.querySelector("#creature");
+      const depthElement = document.querySelector("#depth");
+      const levelElement = document.querySelector("#level");
+      const bestElement = document.querySelector("#best");
+      const messageElement = document.querySelector("#message");
+      const startButton = document.querySelector("#start");
+      let sequence = [];
+      let inputIndex = 0;
+      let level = 0;
+      let best = 0;
+      let acceptingInput = false;
+      let transmissionId = 0;
+
+      function wait(milliseconds) {
+        return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+      }
+
+      function setSignalsEnabled(enabled) {
+        signalButtons.forEach((button) => {
+          button.disabled = !enabled;
+        });
+      }
+
+      function updateHud() {
+        depthElement.textContent = `${level * 180} m`;
+        levelElement.textContent = level;
+        bestElement.textContent = best;
+      }
+
+      async function flashSignal(signal, duration, id) {
+        const button = signalButtons[signal];
+        if (id !== transmissionId) return;
+        button.classList.add("flash");
+        creatureElement.classList.add("transmitting");
+        await wait(duration);
+        button.classList.remove("flash");
+        creatureElement.classList.remove("transmitting");
+      }
+
+      async function showSequence() {
+        const id = transmissionId;
+        acceptingInput = false;
+        setSignalsEnabled(false);
+        messageElement.textContent = "Listen to the signal...";
+        await wait(500);
+
+        for (const signal of sequence) {
+          await flashSignal(signal, Math.max(260, 580 - level * 20), id);
+          await wait(Math.max(140, 300 - level * 9));
+          if (id !== transmissionId) return;
+        }
+
+        if (id === transmissionId) {
+          acceptingInput = true;
+          setSignalsEnabled(true);
+          messageElement.textContent = "Your turn: repeat the transmission.";
+        }
+      }
+
+      function startRound() {
+        sequence.push(Math.floor(Math.random() * signalButtons.length));
+        inputIndex = 0;
+        showSequence();
+      }
+
+      function startGame() {
+        transmissionId += 1;
+        sequence = [];
+        inputIndex = 0;
+        level = 0;
+        acceptingInput = false;
+        setSignalsEnabled(false);
+        updateHud();
+        startButton.textContent = "Restart signal";
+        startRound();
+      }
+
+      function receiveSignal(signal) {
+        if (!acceptingInput) return;
+
+        const correct = sequence[inputIndex] === signal;
+        if (!correct) {
+          acceptingInput = false;
+          setSignalsEnabled(false);
+          best = Math.max(best, level);
+          updateHud();
+          messageElement.textContent = `Signal lost at depth ${level * 180} m. Try again!`;
+          return;
+        }
+
+        inputIndex += 1;
+        if (inputIndex < sequence.length) return;
+
+        acceptingInput = false;
+        setSignalsEnabled(false);
+        level += 1;
+        best = Math.max(best, level);
+        updateHud();
+        messageElement.textContent = `Message decoded! Diving to ${level * 180} m...`;
+        window.setTimeout(startRound, 800);
+      }
+
+      signalButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          receiveSignal(Number(button.dataset.signal));
+        });
+      });
+
+      startButton.addEventListener("click", startGame);
+      updateHud();
+    </script>
+  </body>
+</html>

@@ -11,3 +11,8 @@ any time i ask to create a new game, create a new page for it, along with a name
 keep a list, here, of all the games i've created.
 
 *Connect four
+*Typing Sprint
+*Museum Heist
+*Deep Sea Signal
+*Escape Room
+*Alien Laundry Day

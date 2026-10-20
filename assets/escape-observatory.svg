@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="title">
+  <title>Starlit observatory with a telescope, star chart, brass box, and cabinet</title>
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#07152f"/><stop offset="1" stop-color="#182951"/></linearGradient>
+    <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#4d4168"/><stop offset="1" stop-color="#2b263e"/></linearGradient>
+  </defs>
+  <rect width="800" height="480" fill="url(#wall)"/>
+  <path d="M0 365h800v115H0z" fill="#211c2b"/>
+  <path d="M260 0h280v220H260z" fill="url(#sky)" stroke="#b8a463" stroke-width="12"/>
+  <g fill="#fff4b0"><circle cx="320" cy="58" r="4"/><circle cx="420" cy="88" r="5"/><circle cx="475" cy="47" r="3"/><circle cx="375" cy="145" r="3"/><circle cx="500" cy="165" r="4"/></g>
+  <path d="M300 365l95-155 40 12-68 143m28 0 85-143 37 24-48 119" stroke="#c3a86d" stroke-width="14" stroke-linecap="round"/>
+  <g fill="#453923" stroke="#e0c26f" stroke-width="6"><path d="M338 188l125 25-15 42-124-27z"/><path d="M615 320h110v78H615z"/><path d="M95 278h142v111H95z"/></g>
+  <rect x="108" y="290" width="116" height="72" fill="#e5d7a2"/><path d="M125 315h84m-84 17h84" stroke="#725c37" stroke-width="5"/>
+  <text x="663" y="366" fill="#f0d77e" font-family="serif" font-size="26" text-anchor="middle">BRASS</text>
+  <text x="166" y="411" fill="#f1e5bc" font-family="serif" font-size="22" text-anchor="middle">CABINET</text>
+</svg>

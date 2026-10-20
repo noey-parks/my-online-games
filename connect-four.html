@@ -85,13 +85,53 @@
         box-shadow: inset 0.2rem 0.2rem 0.35rem #a51e2a;
       }
 
-      .yellow {
-        background: #ffcf33;
-        box-shadow: inset 0.2rem 0.2rem 0.35rem #c69b00;
+      .green {
+        background: #43aa5b;
+        box-shadow: inset 0.2rem 0.2rem 0.35rem #277137;
+      }
+
+      .winning {
+        box-shadow: inset 0.2rem 0.2rem 0.35rem rgb(0 0 0 / 35%), 0 0 0 0.25rem #ffffff;
+        position: relative;
+        z-index: 1;
+      }
+
+      #confetti {
+        inset: 0;
+        overflow: hidden;
+        pointer-events: none;
+        position: fixed;
+        z-index: 2;
+      }
+
+      .confetti-piece {
+        animation: shower 2.8s cubic-bezier(.15, .75, .4, 1) var(--delay) forwards;
+        background: var(--color);
+        height: 0.75rem;
+        left: var(--left);
+        position: absolute;
+        top: -1rem;
+        transform: rotate(var(--rotation));
+        width: 0.45rem;
+      }
+
+      @keyframes shower {
+        to {
+          opacity: 0;
+          transform: translate(var(--drift), 110vh) rotate(calc(var(--rotation) + 720deg));
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .confetti-piece {
+          animation: none;
+          display: none;
+        }
       }
 
       .controls {
         display: flex;
+        flex-wrap: wrap;
         gap: 1rem;
         justify-content: center;
         margin-top: 1.25rem;
@@ -107,13 +147,16 @@
         padding: 0.8rem 1.1rem;
       }
 
-      #restart {
+      #restart,
+      #robot {
         background: #fca311;
         color: #14213d;
       }
 
       #restart:hover,
-      #restart:focus-visible {
+      #restart:focus-visible,
+      #robot:hover,
+      #robot:focus-visible {
         background: #ffffff;
       }
 
@@ -123,6 +166,7 @@
     </style>
   </head>
   <body>
+    <div id="confetti" aria-hidden="true"></div>
     <main>
       <h1>Connect Four</h1>
       <p class="subtitle">Drop your pieces and connect four in a row to win.</p>
@@ -130,6 +174,7 @@
       <div class="board" id="board" aria-label="Connect Four game board"></div>
       <div class="controls">
         <button id="restart" type="button">New game</button>
+        <button id="robot" type="button">Play a robot</button>
         <a href="index.html">All games</a>
       </div>
     </main>
@@ -141,11 +186,20 @@
       const boardElement = document.querySelector("#board");
       const statusElement = document.querySelector("#status");
       const restartButton = document.querySelector("#restart");
+      const robotButton = document.querySelector("#robot");
+      const confettiElement = document.querySelector("#confetti");
       let currentPlayer;
       let gameOver;
+      let robotOpponent = false;
 
       function playerName(player) {
-        return player === "red" ? "Red" : "Yellow";
+        return player === "red" ? "Red" : "Green";
+      }
+
+      function updateTurnStatus() {
+        statusElement.textContent = robotOpponent && currentPlayer === "green"
+          ? "Robot's turn"
+          : `${playerName(currentPlayer)} player's turn`;
       }
 
       function createBoard() {
@@ -169,7 +223,15 @@
         return boardElement.querySelector(`[data-row="${row}"][data-column="${column}"]`);
       }
 
-      function isWinningMove(row, column) {
+      function getAvailableColumns() {
+        return [3, 2, 4, 1, 5, 0, 6].filter((column) => board[0][column] === null);
+      }
+
+      function getOpenRow(column) {
+        return board.findLastIndex((boardRow) => boardRow[column] === null);
+      }
+
+      function winningCells(row, column, player = currentPlayer) {
         const directions = [
           [0, 1],
           [1, 0],
@@ -177,8 +239,13 @@
           [1, -1],
         ];
 
-        return directions.some(([rowStep, columnStep]) => {
-          let count = 1;
+        return directions.reduce((winner, [rowStep, columnStep]) => {
+          if (winner) {
+            return winner;
+          }
+
+          const before = [];
+          const after = [];
 
           for (const direction of [-1, 1]) {
             let nextRow = row + rowStep * direction;
@@ -189,24 +256,179 @@
               nextRow < rows &&
               nextColumn >= 0 &&
               nextColumn < columns &&
-              board[nextRow][nextColumn] === currentPlayer
+              board[nextRow][nextColumn] === player
             ) {
-              count += 1;
+              if (direction === -1) {
+                before.push([nextRow, nextColumn]);
+              } else {
+                after.push([nextRow, nextColumn]);
+              }
               nextRow += rowStep * direction;
               nextColumn += columnStep * direction;
             }
           }
 
-          return count >= 4;
-        });
+          const connectedCells = [...before.reverse(), [row, column], ...after];
+          if (connectedCells.length < 4) {
+            return null;
+          }
+
+          const start = Math.max(0, before.length - 3);
+          return connectedCells.slice(start, start + 4);
+        }, null);
       }
 
-      function playColumn(column) {
-        if (gameOver) {
+      function scoreWindow(window) {
+        const green = window.filter((piece) => piece === "green").length;
+        const red = window.filter((piece) => piece === "red").length;
+        const empty = 4 - green - red;
+
+        if (green === 4) {
+          return 100000;
+        }
+
+        if (red === 4) {
+          return -100000;
+        }
+
+        if (green === 3 && empty === 1) {
+          return 120;
+        }
+
+        if (red === 3 && empty === 1) {
+          return -150;
+        }
+
+        if (green === 2 && empty === 2) {
+          return 12;
+        }
+
+        if (red === 2 && empty === 2) {
+          return -14;
+        }
+
+        return 0;
+      }
+
+      function evaluateBoard() {
+        let score = board.reduce(
+          (total, row) => total + (row[3] === "green" ? 6 : row[3] === "red" ? -6 : 0),
+          0,
+        );
+
+        const directions = [
+          [0, 1],
+          [1, 0],
+          [1, 1],
+          [1, -1],
+        ];
+
+        for (let row = 0; row < rows; row += 1) {
+          for (let column = 0; column < columns; column += 1) {
+            directions.forEach(([rowStep, columnStep]) => {
+              const endRow = row + rowStep * 3;
+              const endColumn = column + columnStep * 3;
+
+              if (endRow >= rows || endColumn < 0 || endColumn >= columns) {
+                return;
+              }
+
+              const window = Array.from(
+                { length: 4 },
+                (_, index) => board[row + rowStep * index][column + columnStep * index],
+              );
+              score += scoreWindow(window);
+            });
+          }
+        }
+
+        return score;
+      }
+
+      function minimax(depth, maximizing, alpha, beta) {
+        const columnsToCheck = getAvailableColumns();
+        if (depth === 0 || columnsToCheck.length === 0) {
+          return evaluateBoard();
+        }
+
+        const player = maximizing ? "green" : "red";
+        let bestScore = maximizing ? -Infinity : Infinity;
+
+        for (const column of columnsToCheck) {
+          const row = getOpenRow(column);
+          board[row][column] = player;
+          const isWin = winningCells(row, column, player);
+          const score = isWin
+            ? (player === "green" ? 100000 + depth : -100000 - depth)
+            : minimax(depth - 1, !maximizing, alpha, beta);
+          board[row][column] = null;
+
+          if (maximizing) {
+            bestScore = Math.max(bestScore, score);
+            alpha = Math.max(alpha, bestScore);
+          } else {
+            bestScore = Math.min(bestScore, score);
+            beta = Math.min(beta, bestScore);
+          }
+
+          if (beta <= alpha) {
+            break;
+          }
+        }
+
+        return bestScore;
+      }
+
+      function chooseRobotColumn() {
+        let bestColumn;
+        let bestScore = -Infinity;
+
+        for (const column of getAvailableColumns()) {
+          const row = getOpenRow(column);
+          board[row][column] = "green";
+          const isWin = winningCells(row, column, "green");
+          const score = isWin ? Infinity : minimax(4, false, -Infinity, Infinity);
+          board[row][column] = null;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestColumn = column;
+          }
+        }
+
+        return bestColumn;
+      }
+
+      function showConfetti() {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           return;
         }
 
-        const row = board.findLastIndex((boardRow) => boardRow[column] === null);
+        const colors = ["#e63946", "#43aa5b", "#42c6f5", "#8ad051", "#c77dff"];
+        confettiElement.innerHTML = "";
+
+        for (let index = 0; index < 80; index += 1) {
+          const piece = document.createElement("span");
+          piece.className = "confetti-piece";
+          piece.style.setProperty("--color", colors[index % colors.length]);
+          piece.style.setProperty("--delay", `${Math.random() * 0.65}s`);
+          piece.style.setProperty("--drift", `${-14 + Math.random() * 28}vw`);
+          piece.style.setProperty("--left", `${Math.random() * 100}vw`);
+          piece.style.setProperty("--rotation", `${Math.random() * 360}deg`);
+          confettiElement.append(piece);
+        }
+
+        window.setTimeout(() => {
+          confettiElement.innerHTML = "";
+        }, 3600);
+      }
+
+      function playColumn(column, isRobotMove = false) {
+        if (gameOver || (robotOpponent && currentPlayer === "green" && !isRobotMove)) {
+          return;
+        }
+
+        const row = getOpenRow(column);
         if (row === -1) {
           statusElement.textContent = `Column ${column + 1} is full. Choose another column.`;
           return;
@@ -217,9 +439,14 @@
         cell.classList.add(currentPlayer);
         cell.setAttribute("aria-label", `${playerName(currentPlayer)} piece in column ${column + 1}, row ${row + 1}`);
 
-        if (isWinningMove(row, column)) {
+        const winner = winningCells(row, column);
+        if (winner) {
           gameOver = true;
           statusElement.textContent = `${playerName(currentPlayer)} player wins!`;
+          winner.forEach(([winningRow, winningColumn]) => {
+            getCell(winningRow, winningColumn).classList.add("winning");
+          });
+          showConfetti();
           boardElement.querySelectorAll(".cell").forEach((boardCell) => {
             boardCell.disabled = true;
           });
@@ -232,19 +459,37 @@
           return;
         }
 
-        currentPlayer = currentPlayer === "red" ? "yellow" : "red";
-        statusElement.textContent = `${playerName(currentPlayer)} player's turn`;
+        currentPlayer = currentPlayer === "red" ? "green" : "red";
+        updateTurnStatus();
+
+        if (robotOpponent && currentPlayer === "green") {
+          window.setTimeout(playRobotTurn, 500);
+        }
+      }
+
+      function playRobotTurn() {
+        if (!robotOpponent || gameOver || currentPlayer !== "green") {
+          return;
+        }
+
+        playColumn(chooseRobotColumn(), true);
       }
 
       function startGame() {
         board.forEach((row) => row.fill(null));
         currentPlayer = "red";
         gameOver = false;
-        statusElement.textContent = "Red player's turn";
+        updateTurnStatus();
+        confettiElement.innerHTML = "";
         createBoard();
       }
 
       restartButton.addEventListener("click", startGame);
+      robotButton.addEventListener("click", () => {
+        robotOpponent = !robotOpponent;
+        robotButton.textContent = robotOpponent ? "Play a friend" : "Play a robot";
+        startGame();
+      });
       startGame();
     </script>
   </body>

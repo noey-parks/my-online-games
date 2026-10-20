@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Museum Heist | My Online Games</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        align-items: center;
+        background: linear-gradient(135deg, #17142e, #060510);
+        color: #ffffff;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+        min-height: 100vh;
+        padding: 1.25rem;
+      }
+
+      main {
+        max-width: 54rem;
+        text-align: center;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: clamp(2.25rem, 8vw, 4rem);
+        margin: 0;
+      }
+
+      .subtitle {
+        color: #d1cce9;
+        margin: 0.5rem 0 1rem;
+      }
+
+      .hud {
+        display: flex;
+        font-weight: bold;
+        justify-content: space-between;
+        margin: 0 auto 0.75rem;
+        max-width: 50rem;
+      }
+
+      canvas {
+        border: 0.5rem solid #443c70;
+        border-radius: 1rem;
+        display: block;
+        touch-action: none;
+        width: 100%;
+      }
+
+      #message {
+        color: #e0ddf6;
+        font-weight: bold;
+        min-height: 1.5em;
+        margin: 0.75rem 0;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        justify-content: center;
+      }
+
+      button,
+      a {
+        border: 0;
+        border-radius: 0.65rem;
+        cursor: pointer;
+        font: inherit;
+        font-weight: bold;
+        padding: 0.75rem 1rem;
+      }
+
+      button {
+        background: #f4bf3b;
+        color: #1a1633;
+      }
+
+      button:hover,
+      button:focus-visible {
+        background: #ffffff;
+      }
+
+      a {
+        color: #ffffff;
+      }
+
+      .help {
+        color: #d1cce9;
+        line-height: 1.5;
+        margin: 1rem auto 0;
+        max-width: 44rem;
+      }
+
+      kbd {
+        background: #ffffff;
+        border-radius: 0.25rem;
+        color: #17142e;
+        font-weight: bold;
+        padding: 0.1rem 0.3rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Museum Heist</h1>
+      <p class="subtitle">Steal rare artifacts, slip past the lasers, and escape unseen.</p>
+      <div class="hud">
+        <span id="level">Level 1 / 3</span>
+        <span id="objective">Objective: steal the artifact</span>
+        <span id="alarms">Alarms: 0 / 3</span>
+      </div>
+      <canvas id="game" width="800" height="480" aria-label="Museum Heist game"></canvas>
+      <p id="message" aria-live="polite">Click the room to look with your mouse, then begin the heist.</p>
+      <div class="controls">
+        <button id="restart" type="button">Restart heist</button>
+        <button data-move="left" type="button">Left</button>
+        <button data-move="forward" type="button">Forward</button>
+        <button data-move="backward" type="button">Back</button>
+        <button data-move="right" type="button">Right</button>
+        <a href="index.html">All games</a>
+      </div>
+      <p class="help">
+        Click the room to look with your mouse. Move with <kbd>W</kbd>/<kbd>Up</kbd> and
+        <kbd>S</kbd>/<kbd>Down</kbd>; strafe with <kbd>A</kbd>/<kbd>Left</kbd> and
+        <kbd>D</kbd>/<kbd>Right</kbd>. Slip around the red lasers, avoid patrolling security
+        drones, collect each artifact, then find the glowing exit.
+      </p>
+    </main>
+
+    <script>
+      const canvas = document.querySelector("#game");
+      const context = canvas.getContext("2d");
+      const levelElement = document.querySelector("#level");
+      const objectiveElement = document.querySelector("#objective");
+      const alarmsElement = document.querySelector("#alarms");
+      const messageElement = document.querySelector("#message");
+      const restartButton = document.querySelector("#restart");
+      const width = canvas.width;
+      const height = canvas.height;
+      const outerWalls = [
+        { x: 0, y: 0, width, height: 22 },
+        { x: 0, y: height - 22, width, height: 22 },
+        { x: 0, y: 0, width: 22, height },
+        { x: width - 22, y: 0, width: 22, height },
+      ];
+      const levels = [
+        {
+          name: "East Wing",
+          start: { x: 62, y: 405, angle: -Math.PI / 2 },
+          artifact: { name: "star jewel", type: "jewel", x: 538, y: 62, size: 30 },
+          exit: { x: 730, y: 35, width: 46, height: 72 },
+          walls: [
+            { x: 130, y: 22, width: 25, height: 265 },
+            { x: 130, y: 360, width: 25, height: 98 },
+            { x: 290, y: 130, width: 25, height: 328 },
+            { x: 450, y: 22, width: 25, height: 285 },
+            { x: 450, y: 380, width: 25, height: 78 },
+            { x: 610, y: 120, width: 25, height: 338 },
+          ],
+          lasers: [
+            { x: 160, y: 110, width: 78, height: 8, axis: "y", range: 110, speed: 1.3, phase: 0 },
+            { x: 320, y: 335, width: 78, height: 8, axis: "y", range: 140, speed: 1.1, phase: 1.4 },
+            { x: 480, y: 75, width: 78, height: 8, axis: "y", range: 175, speed: 1.25, phase: 2.3 },
+            { x: 160, y: 300, width: 65, height: 8, axis: "x", range: 55, speed: 1.5, phase: 0.8 },
+            { x: 480, y: 350, width: 65, height: 8, axis: "x", range: 55, speed: 1.4, phase: 3.2 },
+          ],
+          patrols: [
+            { x: 205, y: 250, size: 18, axis: "x", range: 55, speed: 1.05, phase: 0.2 },
+          ],
+          decor: [
+            { type: "display", x: 370, y: 75 },
+          ],
+        },
+        {
+          name: "Sculpture Hall",
+          start: { x: 55, y: 55, angle: Math.PI / 2 },
+          artifact: { name: "marble statuette", type: "statuette", x: 682, y: 248, size: 30 },
+          exit: { x: 35, y: 366, width: 46, height: 72 },
+          walls: [
+            { x: 190, y: 22, width: 25, height: 230 },
+            { x: 190, y: 322, width: 25, height: 136 },
+            { x: 390, y: 22, width: 25, height: 130 },
+            { x: 390, y: 220, width: 25, height: 238 },
+            { x: 590, y: 22, width: 25, height: 280 },
+            { x: 590, y: 370, width: 25, height: 88 },
+          ],
+          lasers: [
+            { x: 220, y: 95, width: 105, height: 8, axis: "y", range: 145, speed: 1.65, phase: 0.5 },
+            { x: 420, y: 230, width: 110, height: 8, axis: "y", range: 120, speed: 1.45, phase: 2.1 },
+            { x: 620, y: 115, width: 100, height: 8, axis: "y", range: 155, speed: 1.7, phase: 3.7 },
+            { x: 220, y: 345, width: 76, height: 8, axis: "x", range: 75, speed: 1.9, phase: 1.1 },
+          ],
+          patrols: [
+            { x: 270, y: 175, size: 18, axis: "y", range: 105, speed: 1.3, phase: 2.2 },
+            { x: 465, y: 300, size: 18, axis: "x", range: 72, speed: 1.2, phase: 4 },
+          ],
+          decor: [],
+        },
+        {
+          name: "Vault Gallery",
+          start: { x: 60, y: 400, angle: -Math.PI / 2 },
+          artifact: { name: "royal crown", type: "crown", x: 710, y: 255, size: 30 },
+          exit: { x: 35, y: 38, width: 46, height: 72 },
+          walls: [
+            { x: 150, y: 22, width: 25, height: 118 },
+            { x: 150, y: 220, width: 25, height: 238 },
+            { x: 330, y: 22, width: 25, height: 298 },
+            { x: 330, y: 390, width: 25, height: 68 },
+            { x: 510, y: 22, width: 25, height: 158 },
+            { x: 510, y: 250, width: 25, height: 208 },
+            { x: 670, y: 22, width: 25, height: 328 },
+            { x: 670, y: 420, width: 25, height: 38 },
+          ],
+          lasers: [
+            { x: 180, y: 245, width: 105, height: 8, axis: "y", range: 135, speed: 2, phase: 0.4 },
+            { x: 360, y: 85, width: 105, height: 8, axis: "y", range: 190, speed: 2.15, phase: 1.9 },
+            { x: 540, y: 275, width: 100, height: 8, axis: "y", range: 120, speed: 2.05, phase: 3.1 },
+            { x: 700, y: 115, width: 58, height: 8, axis: "y", range: 170, speed: 2.25, phase: 4.5 },
+            { x: 180, y: 190, width: 68, height: 8, axis: "x", range: 70, speed: 2.35, phase: 2.7 },
+          ],
+          patrols: [
+            { x: 225, y: 160, size: 18, axis: "y", range: 130, speed: 1.55, phase: 0.8 },
+            { x: 405, y: 250, size: 18, axis: "x", range: 72, speed: 1.7, phase: 2.6 },
+            { x: 555, y: 200, size: 18, axis: "y", range: 135, speed: 1.6, phase: 4.1 },
+          ],
+          decor: [
+            { type: "crownCase", x: 250, y: 320 },
+            { type: "display", x: 430, y: 80 },
+            { type: "vaultCase", x: 570, y: 340 },
+          ],
+        },
+        {
+          name: "Archive Lab",
+          start: { x: 55, y: 400, angle: -Math.PI / 2 },
+          artifact: { name: "ancient scroll", type: "scroll", x: 705, y: 55, size: 30 },
+          exit: { x: 35, y: 366, width: 46, height: 72 },
+          walls: [
+            { x: 170, y: 22, width: 25, height: 258 },
+            { x: 170, y: 350, width: 25, height: 108 },
+            { x: 350, y: 22, width: 25, height: 108 },
+            { x: 350, y: 200, width: 25, height: 258 },
+            { x: 530, y: 22, width: 25, height: 258 },
+            { x: 530, y: 350, width: 25, height: 108 },
+            { x: 650, y: 150, width: 25, height: 308 },
+          ],
+          lasers: [
+            { x: 205, y: 145, width: 100, height: 8, axis: "y", range: 155, speed: 2.15, phase: 0.5 },
+            { x: 385, y: 75, width: 102, height: 8, axis: "y", range: 180, speed: 2.3, phase: 1.7 },
+            { x: 565, y: 145, width: 28, height: 8, axis: "y", range: 160, speed: 2.2, phase: 3.3 },
+            { x: 205, y: 315, width: 65, height: 8, axis: "x", range: 78, speed: 2.4, phase: 4.6 },
+            { x: 565, y: 315, width: 58, height: 8, axis: "x", range: 65, speed: 2.35, phase: 2.4 },
+          ],
+          patrols: [
+            { x: 245, y: 280, size: 18, axis: "x", range: 70, speed: 1.8, phase: 0.4 },
+            { x: 430, y: 145, size: 18, axis: "y", range: 130, speed: 1.9, phase: 2.2 },
+            { x: 590, y: 285, size: 18, axis: "x", range: 48, speed: 1.85, phase: 3.8 },
+          ],
+          decor: [
+            { type: "bookshelf", x: 250, y: 85 },
+            { type: "bookshelf", x: 445, y: 310 },
+            { type: "scrollCase", x: 590, y: 95 },
+          ],
+        },
+        {
+          name: "Grand Atrium",
+          start: { x: 55, y: 55, angle: Math.PI / 2 },
+          artifact: { name: "golden mask", type: "mask", x: 710, y: 400, size: 30 },
+          exit: { x: 35, y: 38, width: 46, height: 72 },
+          walls: [
+            { x: 150, y: 22, width: 25, height: 148 },
+            { x: 150, y: 250, width: 25, height: 208 },
+            { x: 310, y: 22, width: 25, height: 298 },
+            { x: 310, y: 390, width: 25, height: 68 },
+            { x: 470, y: 22, width: 25, height: 98 },
+            { x: 470, y: 190, width: 25, height: 268 },
+            { x: 630, y: 22, width: 25, height: 278 },
+            { x: 630, y: 370, width: 25, height: 88 },
+          ],
+          lasers: [
+            { x: 180, y: 105, width: 96, height: 8, axis: "y", range: 145, speed: 2.4, phase: 0.1 },
+            { x: 340, y: 240, width: 96, height: 8, axis: "y", range: 155, speed: 2.5, phase: 1.6 },
+            { x: 500, y: 70, width: 94, height: 8, axis: "y", range: 200, speed: 2.45, phase: 3.4 },
+            { x: 660, y: 245, width: 72, height: 8, axis: "y", range: 130, speed: 2.6, phase: 4.7 },
+            { x: 180, y: 215, width: 65, height: 8, axis: "x", range: 76, speed: 2.7, phase: 2.7 },
+            { x: 500, y: 145, width: 62, height: 8, axis: "x", range: 66, speed: 2.65, phase: 5.1 },
+          ],
+          patrols: [
+            { x: 225, y: 135, size: 18, axis: "y", range: 140, speed: 2, phase: 0.3 },
+            { x: 375, y: 345, size: 18, axis: "x", range: 70, speed: 2.1, phase: 1.8 },
+            { x: 530, y: 150, size: 18, axis: "y", range: 150, speed: 2.05, phase: 3.5 },
+            { x: 680, y: 290, size: 18, axis: "x", range: 54, speed: 2.2, phase: 5 },
+          ],
+          decor: [
+            { type: "maskDisplay", x: 225, y: 85 },
+            { type: "maskDisplay", x: 550, y: 95 },
+          ],
+        },
+      ];
+      const player = { x: 62, y: 405, size: 24, angle: -Math.PI / 2 };
+      const keys = { forward: false, backward: false, left: false, right: false };
+      const fieldOfView = Math.PI / 3;
+      const projectionDistance = width / 2 / Math.tan(fieldOfView / 2);
+      let levelIndex;
+      let walls;
+      let lasers;
+      let patrols;
+      let decor;
+      let artifact;
+      let exit;
+      let alarmCount;
+      let hasJewel;
+      let gameOver;
+      let animationTime;
+      let lastTime;
+
+      function overlaps(first, second) {
+        return (
+          first.x < second.x + second.width &&
+          first.x + first.width > second.x &&
+          first.y < second.y + second.height &&
+          first.y + first.height > second.y
+        );
+      }
+
+      function playerBox(x = player.x, y = player.y) {
+        return { x, y, width: player.size, height: player.size };
+      }
+
+      function laserBox(laser) {
+        const offset = (Math.sin(animationTime * laser.speed + laser.phase) + 1) * laser.range / 2;
+        return {
+          x: laser.x + (laser.axis === "x" ? offset : 0),
+          y: laser.y + (laser.axis === "y" ? offset : 0),
+          width: laser.width * 0.4,
+          height: laser.height * 0.5,
+        };
+      }
+
+      function patrolBox(patrol) {
+        const offset = (Math.sin(animationTime * patrol.speed + patrol.phase) + 1) * patrol.range / 2;
+        return {
+          x: patrol.x + (patrol.axis === "x" ? offset : 0),
+          y: patrol.y + (patrol.axis === "y" ? offset : 0),
+          width: patrol.size,
+          height: patrol.size,
+        };
+      }
+
+      function updateHud() {
+        levelElement.textContent = `Level ${levelIndex + 1} / ${levels.length}: ${levels[levelIndex].name}`;
+        objectiveElement.textContent = hasJewel
+          ? `Objective: escape with the ${artifact.name}`
+          : `Objective: steal the ${artifact.name}`;
+        alarmsElement.textContent = `Alarms: ${alarmCount} / 3`;
+      }
+
+      function resetPlayer() {
+        player.x = levels[levelIndex].start.x;
+        player.y = levels[levelIndex].start.y;
+        player.angle = levels[levelIndex].start.angle;
+      }
+
+      function loadLevel(index) {
+        levelIndex = index;
+        const level = levels[levelIndex];
+        walls = [...outerWalls, ...level.walls];
+        lasers = level.lasers;
+        patrols = level.patrols;
+        decor = level.decor;
+        artifact = level.artifact;
+        exit = level.exit;
+        alarmCount = 0;
+        hasJewel = false;
+        gameOver = false;
+        animationTime = 0;
+        resetPlayer();
+        updateHud();
+      }
+
+      function resetGame() {
+        lastTime = performance.now();
+        loadLevel(0);
+        messageElement.textContent = "Click the room to look with your mouse, then begin the heist.";
+        draw();
+      }
+
+      function triggerAlarm() {
+        alarmCount += 1;
+        resetPlayer();
+        if (alarmCount >= 3) {
+          gameOver = true;
+          messageElement.textContent = "Security locked down the museum. Restart the heist!";
+        } else {
+          messageElement.textContent = `Alarm ${alarmCount}! Back to the entrance.`;
+        }
+        updateHud();
+      }
+
+      function movePlayer(delta) {
+        const speed = 180;
+        const forward = (keys.forward ? 1 : 0) - (keys.backward ? 1 : 0);
+        const sideways = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+        if (!forward && !sideways) return;
+
+        const length = Math.hypot(forward, sideways);
+        const x = player.x + (
+          Math.cos(player.angle) * forward + Math.cos(player.angle + Math.PI / 2) * sideways
+        ) / length * speed * delta;
+        const y = player.y + (
+          Math.sin(player.angle) * forward + Math.sin(player.angle + Math.PI / 2) * sideways
+        ) / length * speed * delta;
+
+        const nextBox = playerBox(x, y);
+        if (!walls.some((wall) => overlaps(nextBox, wall))) {
+          player.x = x;
+          player.y = y;
+        }
+      }
+
+      function update(delta) {
+        if (gameOver) return;
+        animationTime += delta;
+        movePlayer(delta);
+        const currentPlayer = playerBox();
+
+        if (
+          lasers.some((laser) => overlaps(currentPlayer, laserBox(laser))) ||
+          patrols.some((patrol) => overlaps(currentPlayer, patrolBox(patrol)))
+        ) {
+          triggerAlarm();
+          return;
+        }
+
+        if (!hasJewel && overlaps(currentPlayer, {
+          x: artifact.x,
+          y: artifact.y,
+          width: artifact.size,
+          height: artifact.size,
+        })) {
+          hasJewel = true;
+          messageElement.textContent = `You have the ${artifact.name}! Reach the glowing exit.`;
+          updateHud();
+        }
+
+        if (hasJewel && overlaps(currentPlayer, exit)) {
+          if (levelIndex === levels.length - 1) {
+            gameOver = true;
+            messageElement.textContent = "Perfect heist! You escaped with every stolen artifact.";
+          } else {
+            loadLevel(levelIndex + 1);
+            messageElement.textContent = `Level ${levelIndex + 1}: ${levels[levelIndex].name}. The next artifact is waiting.`;
+          }
+        }
+      }
+
+      function rayDistance(angle) {
+        const originX = player.x + player.size / 2;
+        const originY = player.y + player.size / 2;
+        const directionX = Math.cos(angle);
+        const directionY = Math.sin(angle);
+        let closest = Infinity;
+
+        walls.forEach((wall) => {
+          const xNear = directionX
+            ? Math.min((wall.x - originX) / directionX, (wall.x + wall.width - originX) / directionX)
+            : -Infinity;
+          const xFar = directionX
+            ? Math.max((wall.x - originX) / directionX, (wall.x + wall.width - originX) / directionX)
+            : Infinity;
+          const yNear = directionY
+            ? Math.min((wall.y - originY) / directionY, (wall.y + wall.height - originY) / directionY)
+            : -Infinity;
+          const yFar = directionY
+            ? Math.max((wall.y - originY) / directionY, (wall.y + wall.height - originY) / directionY)
+            : Infinity;
+          const distance = Math.max(xNear, yNear);
+          if (Math.min(xFar, yFar) >= distance && distance > 0 && distance < closest) {
+            closest = distance;
+          }
+        });
+
+        return closest;
+      }
+
+      function projectPoint(x, y) {
+        const originX = player.x + player.size / 2;
+        const originY = player.y + player.size / 2;
+        const offsetX = x - originX;
+        const offsetY = y - originY;
+        const depth = offsetX * Math.cos(player.angle) + offsetY * Math.sin(player.angle);
+        const side = -offsetX * Math.sin(player.angle) + offsetY * Math.cos(player.angle);
+        if (depth <= 12 || rayDistance(Math.atan2(offsetY, offsetX)) < depth - 12) return null;
+        return {
+          depth,
+          scale: projectionDistance / depth,
+          x: width / 2 + side / depth * projectionDistance,
+        };
+      }
+
+      function drawWalls() {
+        const rayCount = 200;
+        const sliceWidth = width / rayCount;
+        const wallColors = [
+          [102, 89, 138],
+          [116, 105, 92],
+          [85, 78, 112],
+          [106, 77, 49],
+          [110, 91, 67],
+        ];
+        const wallColor = wallColors[levelIndex];
+        for (let ray = 0; ray < rayCount; ray += 1) {
+          const offset = ray / (rayCount - 1) - 0.5;
+          const angle = player.angle + offset * fieldOfView;
+          const distance = rayDistance(angle) * Math.cos(offset * fieldOfView);
+          const wallHeight = Math.min(height * 1.6, projectionDistance * 52 / distance);
+          const shade = Math.max(35, 145 - distance * 0.22);
+          const brightness = shade / 145;
+          context.fillStyle = `rgb(${wallColor[0] * brightness}, ${wallColor[1] * brightness}, ${wallColor[2] * brightness})`;
+          context.fillRect(ray * sliceWidth, height / 2 - wallHeight / 2, sliceWidth + 1, wallHeight);
+        }
+      }
+
+      function drawLaserSprite(box, projected) {
+        const beamWidth = Math.max(4, box.width * projected.scale);
+        const beamHeight = Math.max(30, 90 * projected.scale);
+        context.save();
+        context.shadowBlur = 16;
+        context.shadowColor = "#ff4d6d";
+        context.fillStyle = "#ff4d6d";
+        context.fillRect(projected.x - beamWidth / 2, height / 2 - beamHeight / 2, beamWidth, beamHeight);
+        context.restore();
+      }
+
+      function drawDroneSprite(projected) {
+        const radius = Math.max(5, 13 * projected.scale);
+        context.save();
+        context.translate(projected.x, height / 2);
+        context.shadowBlur = 14;
+        context.shadowColor = "#8e7dff";
+        context.fillStyle = "#8e7dff";
+        context.beginPath();
+        context.arc(0, 0, radius, 0, Math.PI * 2);
+        context.fill();
+        context.fillStyle = "#eff4ff";
+        context.beginPath();
+        context.arc(radius / 3, -radius / 4, radius / 4, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+      }
+
+      function drawArtifactSprite(projected) {
+        const size = Math.max(8, 26 * projected.scale * (1 + Math.sin(animationTime * 4) * 0.08));
+        context.save();
+        context.translate(projected.x, height / 2);
+        context.shadowBlur = 16;
+        if (artifact.type === "scroll") {
+          context.fillStyle = "#e8ca8b";
+          context.shadowColor = "#e8ca8b";
+          context.fillRect(-size / 2, -size / 2, size, size);
+          context.fillStyle = "#9a693b";
+          context.fillRect(-size * 0.65, -size / 2, size * 1.3, size / 6);
+          context.fillRect(-size * 0.65, size / 3, size * 1.3, size / 6);
+        } else if (artifact.type === "crown") {
+          context.fillStyle = "#f4bf3b";
+          context.shadowColor = "#f4bf3b";
+          context.beginPath();
+          context.moveTo(-size / 2, size / 2);
+          context.lineTo(-size / 2, -size / 3);
+          context.lineTo(0, 0);
+          context.lineTo(size / 2, -size / 3);
+          context.lineTo(size / 2, size / 2);
+          context.closePath();
+          context.fill();
+        } else if (artifact.type === "mask") {
+          context.fillStyle = "#f4bf3b";
+          context.shadowColor = "#f4bf3b";
+          context.beginPath();
+          context.ellipse(0, 0, size / 2, size * 0.62, 0, 0, Math.PI * 2);
+          context.fill();
+          context.fillStyle = "#2b2138";
+          context.fillRect(-size / 4, -size / 8, size / 6, size / 5);
+          context.fillRect(size / 12, -size / 8, size / 6, size / 5);
+        } else {
+          context.fillStyle = artifact.type === "statuette" ? "#e4e8ec" : "#6de8ff";
+          context.shadowColor = context.fillStyle;
+          context.beginPath();
+          context.moveTo(0, -size / 2);
+          context.lineTo(size / 2, 0);
+          context.lineTo(0, size / 2);
+          context.lineTo(-size / 2, 0);
+          context.closePath();
+          context.fill();
+        }
+        context.restore();
+      }
+
+      function drawDecorSprite(item, projected) {
+        const size = Math.max(18, 86 * projected.scale);
+        const baseY = height / 2 + size / 2;
+        context.save();
+        context.translate(projected.x, baseY);
+
+        if (item.type === "bookshelf") {
+          context.fillStyle = "#5f3a22";
+          context.fillRect(-size / 2, -size, size, size);
+          context.fillStyle = "#2e1c12";
+          for (let shelf = 1; shelf < 4; shelf += 1) {
+            context.fillRect(-size / 2, -size + size * shelf / 4, size, Math.max(2, size / 18));
+          }
+          ["#c95a47", "#d2a64a", "#4e89a8", "#7559a6", "#49845e"].forEach((color, index) => {
+            context.fillStyle = color;
+            context.fillRect(
+              -size * 0.42 + index * size * 0.17,
+              -size * 0.88,
+              size * 0.11,
+              size * 0.19,
+            );
+            context.fillRect(
+              -size * 0.42 + ((index + 2) % 5) * size * 0.17,
+              -size * 0.61,
+              size * 0.11,
+              size * 0.19,
+            );
+          });
+        } else if (item.type === "scrollCase") {
+          context.fillStyle = "rgba(170, 226, 236, 0.35)";
+          context.strokeStyle = "#c5eef5";
+          context.lineWidth = Math.max(2, size / 24);
+          context.fillRect(-size / 2, -size * 0.8, size, size * 0.58);
+          context.strokeRect(-size / 2, -size * 0.8, size, size * 0.58);
+          context.fillStyle = "#ead096";
+          context.fillRect(-size * 0.33, -size * 0.57, size * 0.66, size * 0.14);
+          context.fillStyle = "#74502e";
+          context.fillRect(-size * 0.39, -size * 0.59, size * 0.78, size * 0.05);
+          context.fillRect(-size * 0.39, -size * 0.4, size * 0.78, size * 0.05);
+          context.fillStyle = "#4a2d1d";
+          context.fillRect(-size * 0.42, -size * 0.22, size * 0.84, size * 0.22);
+        } else {
+          const crown = item.type === "crownCase";
+          context.fillStyle = "rgba(181, 225, 236, 0.32)";
+          context.strokeStyle = "#c6edf5";
+          context.lineWidth = Math.max(2, size / 24);
+          context.fillRect(-size / 2, -size * 0.86, size, size * 0.62);
+          context.strokeRect(-size / 2, -size * 0.86, size, size * 0.62);
+          context.fillStyle = crown ? "#f4bf3b" : "#e1a654";
+          context.beginPath();
+          context.arc(0, -size * 0.55, size * 0.18, 0, Math.PI * 2);
+          context.fill();
+          context.fillStyle = "#4a2d1d";
+          context.fillRect(-size * 0.42, -size * 0.22, size * 0.84, size * 0.22);
+        }
+        context.restore();
+      }
+
+      function drawExitSprite(projected) {
+        const doorWidth = Math.max(15, 48 * projected.scale);
+        const doorHeight = Math.max(30, 86 * projected.scale);
+        context.fillStyle = hasJewel ? "#78e08f" : "#39314d";
+        context.fillRect(projected.x - doorWidth / 2, height / 2 - doorHeight / 2, doorWidth, doorHeight);
+        context.strokeStyle = hasJewel ? "#e5ffe9" : "#796f9f";
+        context.lineWidth = Math.max(2, projected.scale * 3);
+        context.strokeRect(projected.x - doorWidth / 2, height / 2 - doorHeight / 2, doorWidth, doorHeight);
+      }
+
+      function drawSprites() {
+        const sprites = [];
+        lasers.forEach((laser) => {
+          const box = laserBox(laser);
+          sprites.push({ type: "laser", box, x: box.x + box.width / 2, y: box.y + box.height / 2 });
+        });
+        patrols.forEach((patrol) => {
+          const box = patrolBox(patrol);
+          sprites.push({ type: "drone", x: box.x + box.width / 2, y: box.y + box.height / 2 });
+        });
+        if (!hasJewel) {
+          sprites.push({
+            type: "artifact",
+            x: artifact.x + artifact.size / 2,
+            y: artifact.y + artifact.size / 2,
+          });
+        }
+        sprites.push({ type: "exit", x: exit.x + exit.width / 2, y: exit.y + exit.height / 2 });
+        decor.forEach((item) => {
+          sprites.push({ type: "decor", item, x: item.x, y: item.y });
+        });
+
+        sprites
+          .map((sprite) => ({ ...sprite, projected: projectPoint(sprite.x, sprite.y) }))
+          .filter((sprite) => sprite.projected)
+          .sort((first, second) => second.projected.depth - first.projected.depth)
+          .forEach((sprite) => {
+            if (sprite.type === "laser") drawLaserSprite(sprite.box, sprite.projected);
+            if (sprite.type === "drone") drawDroneSprite(sprite.projected);
+            if (sprite.type === "artifact") drawArtifactSprite(sprite.projected);
+            if (sprite.type === "exit") drawExitSprite(sprite.projected);
+            if (sprite.type === "decor") drawDecorSprite(sprite.item, sprite.projected);
+          });
+      }
+
+      function draw() {
+        const ceiling = context.createLinearGradient(0, 0, 0, height / 2);
+        ceiling.addColorStop(0, "#0e0c1d");
+        ceiling.addColorStop(1, "#30294a");
+        context.fillStyle = ceiling;
+        context.fillRect(0, 0, width, height / 2);
+        context.strokeStyle = "rgba(212, 205, 243, 0.13)";
+        context.lineWidth = 1;
+        for (let line = 1; line < 5; line += 1) {
+          const y = height / 2 - 180 / line;
+          context.beginPath();
+          context.moveTo(0, y);
+          context.lineTo(width, y);
+          context.stroke();
+        }
+        for (let line = -4; line <= 4; line += 1) {
+          context.beginPath();
+          context.moveTo(width / 2, height / 2);
+          context.lineTo(width / 2 + line * 170, 0);
+          context.stroke();
+        }
+        context.fillStyle = "#fff2b2";
+        context.shadowBlur = 18;
+        context.shadowColor = "#fff2b2";
+        context.fillRect(width / 2 - 5, 54, 10, 6);
+        context.shadowBlur = 0;
+        const floor = context.createLinearGradient(0, height / 2, 0, height);
+        floor.addColorStop(0, "#26213d");
+        floor.addColorStop(1, "#0e0d1c");
+        context.fillStyle = floor;
+        context.fillRect(0, height / 2, width, height / 2);
+        drawWalls();
+        drawSprites();
+        context.strokeStyle = "rgba(255, 255, 255, 0.45)";
+        context.beginPath();
+        context.moveTo(width / 2 - 7, height / 2);
+        context.lineTo(width / 2 + 7, height / 2);
+        context.moveTo(width / 2, height / 2 - 7);
+        context.lineTo(width / 2, height / 2 + 7);
+        context.stroke();
+      }
+
+      function gameLoop(time) {
+        const delta = Math.min((time - lastTime) / 1000, 0.05);
+        lastTime = time;
+        update(delta);
+        draw();
+        requestAnimationFrame(gameLoop);
+      }
+
+      const keyActions = {
+        ArrowUp: "forward",
+        w: "forward",
+        ArrowDown: "backward",
+        s: "backward",
+        ArrowLeft: "left",
+        a: "left",
+        ArrowRight: "right",
+        d: "right",
+      };
+
+      document.addEventListener("keydown", (event) => {
+        const action = keyActions[event.key] || keyActions[event.key.toLowerCase()];
+        if (action) {
+          event.preventDefault();
+          keys[action] = true;
+        }
+      });
+
+      document.addEventListener("keyup", (event) => {
+        const action = keyActions[event.key] || keyActions[event.key.toLowerCase()];
+        if (action) keys[action] = false;
+      });
+
+      document.querySelectorAll("[data-move]").forEach((button) => {
+        const { move } = button.dataset;
+        button.addEventListener("pointerdown", (event) => {
+          event.preventDefault();
+          keys[move] = true;
+        });
+        ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => {
+          button.addEventListener(eventName, () => {
+            keys[move] = false;
+          });
+        });
+      });
+
+      canvas.addEventListener("click", () => {
+        if (document.pointerLockElement !== canvas && canvas.requestPointerLock) {
+          canvas.requestPointerLock();
+        }
+      });
+
+      document.addEventListener("mousemove", (event) => {
+        if (document.pointerLockElement === canvas) {
+          player.angle += event.movementX * 0.003;
+        }
+      });
+
+      document.addEventListener("pointerlockchange", () => {
+        if (document.pointerLockElement === canvas && !gameOver) {
+          messageElement.textContent = "Mouse look enabled. Escape unlocks the cursor.";
+        }
+      });
+
+      restartButton.addEventListener("click", resetGame);
+      resetGame();
+      requestAnimationFrame(gameLoop);
+    </script>
+  </body>
+</html>

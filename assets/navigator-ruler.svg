@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 180" role="img" aria-labelledby="title">
+  <title>Navigator's ruler marked 6, 0, and 9</title>
+  <rect width="420" height="180" rx="16" fill="#294c5b"/>
+  <path d="M32 55h356v72H32z" fill="#dbc784" stroke="#624b2f" stroke-width="6"/>
+  <g stroke="#513d29" stroke-width="3">
+    <path d="M50 55v25m18-25v15m18-15v25m18-25v15m18-15v25m18-25v15m18-15v25m18-25v15m18-15v25m18-25v15m18-15v25m18-25v15m18-15v25m18-25v15m18-15v25m18-25v15m18-15v25m18-25v15m18-15v25"/>
+    <path d="M50 127v-25m18 25v-15m18 15v-25m18 25v-15m18 15v-25m18 25v-15m18 15v-25m18 25v-15m18 15v-25m18 25v-15m18 15v-25m18 25v-15m18 15v-25m18 25v-15m18 15v-25m18 25v-15m18 15v-25m18 25v-15"/>
+  </g>
+  <g fill="#264a58" font-family="serif" font-size="38" font-weight="bold" text-anchor="middle">
+    <text x="112" y="105">6</text><text x="210" y="105">0</text><text x="308" y="105">9</text>
+  </g>
+  <text x="210" y="160" fill="#e2eff0" font-family="serif" font-size="16" text-anchor="middle">navigator's ruler</text>
+</svg>

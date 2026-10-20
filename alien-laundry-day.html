@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alien Laundry Day | My Online Games</title>
+    <style>
+      :root { color-scheme: dark; font-family: Arial, sans-serif; }
+      * { box-sizing: border-box; }
+      body { align-items: center; background: radial-gradient(circle at 50% 0, #513a8a, #120f2a 70%); color: #ffffff; display: flex; justify-content: center; margin: 0; min-height: 100vh; padding: 1.25rem; }
+      main { max-width: 52rem; text-align: center; width: 100%; }
+      h1 { font-size: clamp(2.25rem, 8vw, 4rem); margin: 0; }
+      .subtitle { color: #d8ceff; margin: 0.5rem 0 1rem; }
+      .hud { display: grid; gap: 0.7rem; grid-template-columns: repeat(3, 1fr); margin-bottom: 1rem; }
+      .stat { background: #30245a; border-radius: 0.7rem; padding: 0.65rem; }
+      .label { color: #c4b7f2; display: block; font-size: 0.75rem; text-transform: uppercase; }
+      .value { font-size: clamp(1.2rem, 4vw, 1.7rem); font-weight: bold; }
+      .laundry-room { background: linear-gradient(180deg, #37275e 0 62%, #201838 63%); border: 0.45rem solid #7962ad; border-radius: 1rem; overflow: hidden; padding: 1rem; position: relative; }
+      .laundry-room::before { background: repeating-linear-gradient(90deg, transparent 0 4rem, rgb(255 255 255 / 7%) 4rem 4.15rem); content: ""; inset: 0 0 38%; pointer-events: none; position: absolute; }
+      .machine-row { display: flex; gap: 0.7rem; justify-content: space-between; left: 1.2rem; position: absolute; right: 1.2rem; top: 1.2rem; }
+      .machine { background: #b9c5d1; border: 0.25rem solid #e8f0f4; border-radius: 0.5rem; height: 5.4rem; position: relative; width: 5rem; }
+      .machine::before { background: #22324d; border: 0.25rem solid #56697e; border-radius: 50%; content: ""; height: 2.7rem; left: 0.9rem; position: absolute; top: 1.6rem; width: 2.7rem; }
+      .machine::after { background: #f1cb57; border-radius: 50%; content: ""; height: 0.45rem; left: 0.55rem; position: absolute; top: 0.45rem; width: 0.45rem; }
+      .garment-stage { align-items: center; display: flex; height: 17rem; justify-content: center; margin: 4.8rem 0 1rem; overflow: hidden; position: relative; }
+      .garment { align-items: center; background: var(--garment-color); border: 0.25rem solid rgb(255 255 255 / 55%); display: flex; flex-direction: column; gap: 0.55rem; justify-content: center; min-height: 9rem; padding: 1rem; position: relative; width: min(12rem, 52vw); z-index: 1; }
+      .orbit-overalls { border-radius: 0.7rem; min-height: 10rem; }
+      .orbit-overalls::before, .orbit-overalls::after { border: 0.7rem solid var(--garment-color); border-bottom: 0; content: ""; height: 3rem; position: absolute; top: -2.3rem; width: 3rem; }
+      .orbit-overalls::before { left: 1rem; transform: rotate(-12deg); } .orbit-overalls::after { right: 1rem; transform: rotate(12deg); }
+      .nebula-jumpsuit { border-radius: 1.5rem 1.5rem 0.5rem 0.5rem; }
+      .nebula-jumpsuit::before, .nebula-jumpsuit::after { background: var(--garment-color); border: inherit; border-radius: 0.6rem; content: ""; height: 3.5rem; position: absolute; top: 1rem; width: 2.8rem; }
+      .nebula-jumpsuit::before { left: -2.3rem; transform: rotate(24deg); } .nebula-jumpsuit::after { right: -2.3rem; transform: rotate(-24deg); }
+      .stardust-shirt { border-radius: 1.2rem 1.2rem 0.5rem 0.5rem; min-height: 7rem; width: min(10rem, 45vw); }
+      .stardust-shirt::before, .stardust-shirt::after { background: var(--garment-color); border: 0.25rem solid rgb(255 255 255 / 55%); border-radius: 0.5rem; content: ""; height: 3rem; position: absolute; top: 0.7rem; width: 2.5rem; }
+      .stardust-shirt::before { left: -2rem; transform: rotate(25deg); } .stardust-shirt::after { right: -2rem; transform: rotate(-25deg); }
+      .lunar-pants { background: transparent; border: 0; display: flex; gap: 1rem; min-height: 8rem; width: min(10rem, 45vw); }
+      .lunar-pants::before, .lunar-pants::after { background: var(--garment-color); border: 0.25rem solid rgb(255 255 255 / 55%); border-radius: 0.35rem 0.35rem 0.7rem 0.7rem; content: ""; height: 7.5rem; width: 3.6rem; }
+      .comet-cape { border-radius: 45% 45% 1rem 1rem; clip-path: polygon(25% 0, 75% 0, 100% 100%, 0 100%); min-height: 11rem; }
+      .plasma-socks { background: transparent; border: 0; display: flex; flex-direction: row; gap: 1.5rem; min-height: 8rem; }
+      .plasma-socks::before, .plasma-socks::after { background: var(--garment-color); border: 0.25rem solid rgb(255 255 255 / 55%); border-radius: 1rem 1rem 0.4rem 0.9rem; content: ""; height: 7rem; width: 3.4rem; }
+      .meteor-mittens { background: transparent; border: 0; display: flex; flex-direction: row; gap: 1rem; min-height: 5rem; }
+      .meteor-mittens::before, .meteor-mittens::after { background: linear-gradient(var(--garment-color), var(--garment-color)) center bottom / 100% 62% no-repeat, linear-gradient(var(--garment-color), var(--garment-color)) left top / 27% 43% no-repeat, linear-gradient(var(--garment-color), var(--garment-color)) center top / 27% 43% no-repeat, linear-gradient(var(--garment-color), var(--garment-color)) right top / 27% 43% no-repeat; content: ""; filter: drop-shadow(0 0 0.18rem rgb(255 255 255 / 70%)); height: 4.5rem; width: 3.35rem; }
+      .velvet { box-shadow: inset 0 0 1.5rem rgb(0 0 0 / 55%), 0 0 0.6rem rgb(255 255 255 / 20%); }
+      .scaly { background-image: radial-gradient(circle at 50% 0, rgb(255 255 255 / 42%) 0 21%, transparent 22%); background-size: 1.4rem 1.4rem; }
+      .fuzzy { box-shadow: inset 0 0 0.5rem #ffffff, 0 0 0.8rem #ffffff; filter: saturate(0.8); }
+      .crystalline { background-image: linear-gradient(135deg, rgb(255 255 255 / 55%) 0 12%, transparent 13% 45%, rgb(255 255 255 / 30%) 46% 56%, transparent 57%); background-size: 2rem 2rem; }
+      .floats-upward { animation: float-up 3.5s ease-in-out infinite alternate; }
+      .sticks-sideways { animation: stick-sideways 2.5s ease-in-out infinite alternate; }
+      .heavy-as-lead { animation: heavy-drop 1.5s ease-in-out infinite alternate; }
+      .orbits-slowly { animation: orbit 4s linear infinite; }
+      @keyframes float-up { to { transform: translateY(-5.5rem) rotate(-5deg); } }
+      @keyframes stick-sideways { to { transform: translateX(6rem) rotate(90deg); } }
+      @keyframes heavy-drop { to { transform: translateY(4rem) scaleY(0.94); } }
+      @keyframes orbit { to { transform: rotate(360deg) translateX(3.5rem) rotate(-360deg); } }
+      .garment-details { min-height: 2.4rem; }
+      .garment-title { font-size: 1.2rem; font-weight: bold; margin: 0 0 0.4rem; text-transform: capitalize; }
+      .tags { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
+      .tag { background: rgb(9 7 28 / 65%); border-radius: 1rem; padding: 0.35rem 0.55rem; }
+      .pods { display: grid; gap: 0.7rem; grid-template-columns: repeat(3, 1fr); }
+      .pod { background: #2a2450; border: 0.16rem solid #9c8bd1; border-radius: 0.75rem; color: #ffffff; cursor: pointer; font: inherit; min-height: 10rem; padding: 0.65rem; }
+      .pod:hover:not(:disabled), .pod:focus-visible:not(:disabled) { background: #4c3d80; outline: 0.18rem solid #ffffff; outline-offset: 0.12rem; transform: translateY(-0.15rem); }
+      .pod:disabled { cursor: default; opacity: 0.55; }
+      .pod-name { display: block; font-size: 1.05rem; font-weight: bold; margin-bottom: 0.6rem; }
+      .pod-rule { color: #ded7ff; display: block; font-size: 0.82rem; line-height: 1.5; }
+      #message { color: #eee9ff; font-weight: bold; min-height: 1.5em; margin: 0.8rem 0; }
+      .controls { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
+      button, a { border: 0; border-radius: 0.6rem; cursor: pointer; font: inherit; font-weight: bold; padding: 0.75rem 1rem; }
+      #start { background: #f1cb57; color: #291e42; }
+      #start:hover, #start:focus-visible { background: #ffffff; }
+      a { color: #ffffff; }
+      @media (max-width: 34rem) { .pods { grid-template-columns: 1fr; } .pod { min-height: auto; } }
+      @media (prefers-reduced-motion: reduce) { .floats-upward, .sticks-sideways, .heavy-as-lead, .orbits-slowly { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Alien Laundry Day</h1>
+      <p class="subtitle">Sort every strange space garment into the only pod that can wash it.</p>
+      <div class="hud">
+        <div class="stat"><span class="label">Time</span><span class="value" id="time">60</span></div>
+        <div class="stat"><span class="label">Sorted</span><span class="value" id="score">0</span></div>
+        <div class="stat"><span class="label">Strikes</span><span class="value" id="strikes">0 / 3</span></div>
+      </div>
+      <section class="laundry-room">
+        <div class="machine-row" aria-hidden="true"><div class="machine"></div><div class="machine"></div><div class="machine"></div><div class="machine"></div></div>
+        <div class="garment-stage">
+          <div class="garment" id="garment" aria-label="Garment to sort"></div>
+        </div>
+        <div class="garment-details">
+          <p class="garment-title" id="garment-name">Waiting for laundry</p>
+          <div class="tags" id="tags"></div>
+        </div>
+        <div class="pods" id="pods" aria-label="Laundry pods"></div>
+      </section>
+      <p id="message" aria-live="polite">Start the washer, then match every garment to its pod.</p>
+      <div class="controls">
+        <button id="start" type="button">Start shift</button>
+        <a href="index.html">All games</a>
+      </div>
+    </main>
+    <script>
+      const colors = [
+        { name: "blue", value: "#268fc5" },
+        { name: "purple", value: "#8052bd" },
+        { name: "green", value: "#63a94a" },
+        { name: "orange", value: "#c98231" },
+      ];
+      const textures = ["velvet", "scaly", "fuzzy", "crystalline"];
+      const gravities = ["floats upward", "sticks sideways", "heavy as lead", "orbits slowly"];
+      const garmentNames = ["nebula jumpsuit", "comet cape", "orbit overalls", "stardust shirt", "lunar pants"];
+      const timeElement = document.querySelector("#time");
+      const scoreElement = document.querySelector("#score");
+      const strikesElement = document.querySelector("#strikes");
+      const garmentElement = document.querySelector("#garment");
+      const garmentNameElement = document.querySelector("#garment-name");
+      const tagsElement = document.querySelector("#tags");
+      const podsElement = document.querySelector("#pods");
+      const messageElement = document.querySelector("#message");
+      const startButton = document.querySelector("#start");
+      let pods;
+      let garment;
+      let score;
+      let strikes;
+      let running;
+      let endsAt;
+      let timer;
+
+      function randomItem(items) {
+        return items[Math.floor(Math.random() * items.length)];
+      }
+
+      function createPod(index, used) {
+        let pod;
+        do {
+          pod = { color: randomItem(colors), texture: randomItem(textures), gravity: randomItem(gravities), name: `Pod ${index + 1}` };
+        } while (used.some((other) => other.color.name === pod.color.name && other.texture === pod.texture && other.gravity === pod.gravity));
+        return pod;
+      }
+
+      function createLaundry() {
+        const target = randomItem(pods);
+        garment = {
+          ...target,
+          name: randomItem(garmentNames),
+        };
+        const garmentClass = garment.name.replaceAll(" ", "-");
+        const textureClass = garment.texture;
+        const gravityClass = garment.gravity.replaceAll(" ", "-");
+        garmentElement.className = `garment ${garmentClass} ${textureClass} ${gravityClass}`;
+        garmentElement.style.setProperty("--garment-color", garment.color.value);
+        garmentNameElement.textContent = garment.name;
+        tagsElement.innerHTML = "";
+        [`${garment.color.name}`, garment.texture, garment.gravity].forEach((tag) => {
+          const tagElement = document.createElement("span");
+          tagElement.className = "tag";
+          tagElement.textContent = tag;
+          tagsElement.append(tagElement);
+        });
+      }
+
+      function renderPods() {
+        podsElement.innerHTML = "";
+        pods.forEach((pod, index) => {
+          const button = document.createElement("button");
+          button.className = "pod";
+          button.type = "button";
+          button.disabled = !running;
+          button.innerHTML = `<span class="pod-name">${pod.name}</span><span class="pod-rule">Color: ${pod.color.name}<br>Texture: ${pod.texture}<br>Gravity: ${pod.gravity}</span>`;
+          button.addEventListener("click", () => sortLaundry(index));
+          podsElement.append(button);
+        });
+      }
+
+      function updateHud() {
+        scoreElement.textContent = score;
+        strikesElement.textContent = `${strikes} / 3`;
+        timeElement.textContent = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      }
+
+      function finishShift(message) {
+        running = false;
+        window.clearInterval(timer);
+        renderPods();
+        messageElement.textContent = message;
+        startButton.textContent = "Start new shift";
+      }
+
+      function tick() {
+        updateHud();
+        if (Date.now() >= endsAt) finishShift(`Shuttle departed! You sorted ${score} garments.`);
+      }
+
+      function sortLaundry(index) {
+        const pod = pods[index];
+        const matches = pod.color.name === garment.color.name && pod.texture === garment.texture && pod.gravity === garment.gravity;
+        if (matches) {
+          score += 1;
+          messageElement.textContent = "Perfect sort! Next garment incoming.";
+          createLaundry();
+        } else {
+          strikes += 1;
+          messageElement.textContent = "Wrong pod! That garment made a mess.";
+          if (strikes >= 3) {
+            updateHud();
+            finishShift(`Laundry overflow! You sorted ${score} garments.`);
+            return;
+          }
+        }
+        updateHud();
+      }
+
+      function startShift() {
+        score = 0;
+        strikes = 0;
+        running = true;
+        endsAt = Date.now() + 60000;
+        pods = [];
+        for (let index = 0; index < 3; index += 1) pods.push(createPod(index, pods));
+        createLaundry();
+        renderPods();
+        updateHud();
+        messageElement.textContent = "Match all three garment traits to a laundry pod.";
+        startButton.textContent = "Restart shift";
+        window.clearInterval(timer);
+        timer = window.setInterval(tick, 100);
+      }
+
+      startButton.addEventListener("click", startShift);
+      score = 0;
+      strikes = 0;
+      endsAt = Date.now() + 60000;
+      pods = [];
+      renderPods();
+    </script>
+  </body>
+</html>

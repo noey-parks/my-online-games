@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Escape Room | My Online Games</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        background: radial-gradient(circle at 50% 0, #3e2850, #090912 68%);
+        color: #fff8ea;
+        margin: 0;
+        min-height: 100vh;
+        padding: 1.5rem;
+      }
+
+      main { margin: 0 auto; max-width: 56rem; }
+      h1 { font-size: clamp(2.25rem, 8vw, 4rem); margin: 0; text-align: center; }
+      .subtitle, #message { text-align: center; }
+      .subtitle { color: #e8cfe9; margin: 0.5rem 0 1rem; }
+
+      .hud, .room-tabs { display: grid; gap: 0.6rem; grid-template-columns: repeat(3, 1fr); }
+      .hud { margin-bottom: 0.9rem; }
+      .hud-item, .room-tab {
+        background: #342141;
+        border: 0.1rem solid #6c4b7e;
+        border-radius: 0.6rem;
+        color: #fff8ea;
+        font: inherit;
+        min-height: 3.5rem;
+        padding: 0.5rem;
+        text-align: center;
+      }
+
+      .hud-label { color: #ddc7e2; display: block; font-size: 0.72rem; text-transform: uppercase; }
+      .hud-value { font-size: 1.1rem; font-weight: bold; }
+      .room-tab { cursor: pointer; font-weight: bold; }
+      .room-tab.active { background: #d4a948; border-color: #f8df98; color: #281b11; }
+      .room-tab:disabled { cursor: not-allowed; opacity: 0.45; }
+
+      .room {
+        background: #1b1622;
+        border: 0.45rem solid #5a3b67;
+        border-radius: 1rem;
+        margin-top: 0.8rem;
+        overflow: hidden;
+        padding: clamp(0.8rem, 3vw, 1.5rem);
+      }
+
+      .room-title { font-size: clamp(1.5rem, 5vw, 2.2rem); margin: 0; }
+      .room-description { color: #eadcec; line-height: 1.45; margin: 0.4rem 0 1rem; }
+      .scene { border: 0.2rem solid #8a668f; border-radius: 0.75rem; overflow: hidden; position: relative; }
+      .scene img { display: block; width: 100%; }
+
+      .hotspot {
+        background: rgb(255 234 170 / 12%);
+        border: 0.16rem solid rgb(255 236 176 / 80%);
+        border-radius: 0.4rem;
+        color: #ffffff;
+        cursor: pointer;
+        font: inherit;
+        font-size: clamp(0.65rem, 2vw, 0.9rem);
+        font-weight: bold;
+        padding: 0.25rem;
+        position: absolute;
+        text-shadow: 0 0 0.3rem #000000;
+      }
+
+      .hotspot:hover, .hotspot:focus-visible {
+        background: rgb(255 234 170 / 32%);
+        outline: 0.15rem solid #ffffff;
+        outline-offset: 0.12rem;
+      }
+
+      .clue, .puzzle, .inventory {
+        background: #292033;
+        border-left: 0.3rem solid #d4a948;
+        border-radius: 0.35rem;
+        line-height: 1.5;
+        margin-top: 1rem;
+        padding: 0.8rem;
+      }
+
+      .clue { color: #fff2c6; min-height: 3.5rem; }
+      .reference-keys {
+        display: grid;
+        gap: 0.7rem;
+        grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+        margin-top: 1rem;
+      }
+
+      .reference-key {
+        background: #211a29;
+        border: 0.1rem solid #876993;
+        border-radius: 0.5rem;
+        margin: 0;
+        overflow: hidden;
+        padding: 0.45rem;
+      }
+
+      .reference-key img {
+        border-radius: 0.25rem;
+        display: block;
+        width: 100%;
+      }
+
+      .cipher-wheel-image {
+        transition: transform 180ms ease;
+      }
+
+      .cipher-controls {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        justify-content: center;
+        margin-top: 0.5rem;
+      }
+
+      .cipher-controls button {
+        background: #d4a948;
+        color: #241b2b;
+        padding: 0.4rem 0.55rem;
+      }
+
+      .cipher-readout {
+        color: #fff2c6;
+        font-family: monospace;
+        font-size: 0.9rem;
+        margin: 0.5rem 0 0;
+        text-align: center;
+      }
+
+      .reference-key figcaption {
+        color: #f7e9bb;
+        font-weight: bold;
+        padding: 0.4rem 0 0;
+        text-align: center;
+      }
+
+      .puzzle h3 { margin: 0 0 0.35rem; }
+      .code-form { align-items: end; display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 0.7rem; }
+      label { color: #eadcec; font-weight: bold; }
+      input {
+        background: #fffdf4;
+        border: 0.15rem solid #a58241;
+        border-radius: 0.45rem;
+        color: #241b2b;
+        font: inherit;
+        font-size: 1.1rem;
+        padding: 0.6rem;
+        text-transform: uppercase;
+        width: 9rem;
+      }
+
+      button, a {
+        border: 0;
+        border-radius: 0.55rem;
+        cursor: pointer;
+        font: inherit;
+        font-weight: bold;
+        padding: 0.7rem 0.9rem;
+      }
+
+      .unlock, #restart { background: #d4a948; color: #241b2b; }
+      .unlock:hover, .unlock:focus-visible, #restart:hover, #restart:focus-visible { background: #ffffff; }
+      .hint {
+        background: #4d6f91;
+        color: #ffffff;
+      }
+
+      .hint:hover, .hint:focus-visible { background: #7099c0; }
+      .bypass {
+        background: #5b3d68;
+        color: #ffffff;
+        margin-top: 0.8rem;
+      }
+
+      .bypass:hover, .bypass:focus-visible { background: #876993; }
+      #message { color: #f2dbe7; font-weight: bold; min-height: 1.5em; margin: 0.85rem 0; }
+      .footer { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
+      a { color: #ffffff; }
+
+      @media (max-width: 35rem) {
+        .room-tabs, .hud { gap: 0.3rem; }
+        .room-tab, .hud-item { font-size: 0.76rem; padding: 0.35rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Escape Room</h1>
+      <p class="subtitle">Search each illustrated room, connect hidden clues, and unlock a path to freedom.</p>
+      <div class="hud">
+        <div class="hud-item"><span class="hud-label">Room</span><span class="hud-value" id="room-progress">1 / 3</span></div>
+        <div class="hud-item"><span class="hud-label">Locks solved</span><span class="hud-value" id="lock-progress">0 / 6</span></div>
+        <div class="hud-item"><span class="hud-label">Inventory</span><span class="hud-value" id="inventory-progress">Empty</span></div>
+      </div>
+      <div class="room-tabs" id="room-tabs"></div>
+      <section class="room" id="room"></section>
+      <p id="message" aria-live="polite">Search the observatory. Some clues only make sense after you open another box.</p>
+      <div class="footer">
+        <button id="restart" type="button">Restart escape</button>
+        <a href="index.html">All games</a>
+      </div>
+    </main>
+
+    <script>
+      const rooms = [
+        {
+          name: "Starlit Observatory",
+          image: "assets/escape-observatory.svg",
+          description: "A telescope, star chart, brass box, and locked cabinet sit beneath a glass dome.",
+          hotspots: [
+            { name: "Star chart", position: "12%,60%,18%,23%", clue: "You find a folded Morse reference card tucked behind the chart. Dots are short; dashes are long.", evidence: "morse-key" },
+            { name: "Telescope", position: "40%,40%,20%,31%", clue: "The telescope blinks: ... - .- .-.  The stars are sending a four-letter word.", evidence: "telescope-signal" },
+            { name: "Brass box", position: "77%,67%,14%,18%", clue: "The brass box accepts a four-letter word.", evidence: "brass-box" },
+            { name: "Cabinet", position: "12%,67%,18%,26%", clue: "Four raised cells appear on the cabinet: ⠝ ⠕ ⠧ ⠁. You need a Braille key.", evidence: "braille-cabinet" },
+          ],
+          puzzles: [
+            { label: "Brass box", prompt: "Enter the word sent by the telescope.", code: "STAR", needs: ["morse-key", "telescope-signal"], grant: "Braille legend", success: "The brass box opens. You take a Braille legend printed on a brass card." },
+            { label: "Tactile cabinet", prompt: "Use the Braille legend to read the four raised cells.", code: "NOVA", needs: ["braille-cabinet", "Braille legend"], grant: "Library key", success: "The cabinet unlocks, revealing a Library key and the next room's door." },
+          ],
+        },
+        {
+          name: "Clockwork Library",
+          image: "assets/escape-library.svg",
+          description: "Towering bookcases surround a stopped clock, a clock cabinet, and a hidden book safe.",
+          hotspots: [
+            { name: "Grand clock", position: "38%,11%,23%,45%", clue: "The grand clock stopped at 8:15. Its pendulum carries the phrase: \"Keep the digits, lose the colon.\"", evidence: "clock-time" },
+            { name: "Clock cabinet", position: "42%,64%,16%,27%", clue: "The clock cabinet has a three-digit keypad.", evidence: "clock-cabinet" },
+            { name: "Bookcase", position: "7%,10%,25%,62%", clue: "A hollow book contains a cipher strip: PRRQ. Its margin says: \"Turn the wheel three steps back.\"", evidence: "cipher-strip" },
+            { name: "Book safe", position: "59%,65%,16%,20%", clue: "The book safe accepts a four-letter answer.", evidence: "book-safe" },
+          ],
+          puzzles: [
+            { label: "Clock cabinet", prompt: "Use the stopped clock and its pendulum instruction.", code: "815", needs: ["clock-time", "clock-cabinet"], grant: "Cipher wheel", success: "The cabinet opens. A cipher wheel inside confirms that each letter should shift back three places." },
+            { label: "Book safe", prompt: "Decode the cipher strip with the cipher wheel.", code: "MOON", needs: ["cipher-strip", "book-safe", "Cipher wheel"], grant: "Moon token", success: "The book safe opens. You find a moon token that fits a panel in the conservatory." },
+          ],
+        },
+        {
+          name: "Moonlit Conservatory",
+          image: "assets/escape-conservatory.svg",
+          description: "Silver plants, wind chimes, a moon panel, a seed box, and the final escape chest glow in the moonlight.",
+          hotspots: [
+            { name: "Moon panel", position: "42%,35%,16%,31%", clue: "The moon token opens the panel. Inside, raised cells read: ⠛ ⠗ ⠕ ⠺.", evidence: "moon-panel", item: "Moon token" },
+            { name: "Seed box", position: "37%,70%,17%,18%", clue: "The seed box has a four-letter botanical lock.", evidence: "seed-box" },
+            { name: "Wind chimes", position: "77%,14%,13%,34%", clue: "The chimes ring: -  ..  -..  .  A prism makes the pattern clearer.", evidence: "chimes", item: "Moon prism" },
+            { name: "Escape chest", position: "66%,70%,21%,22%", clue: "The final chest accepts a four-letter command.", evidence: "escape-chest" },
+          ],
+          puzzles: [
+            { label: "Seed box", prompt: "Read the Moon panel with the Braille legend.", code: "GROW", needs: ["moon-panel", "seed-box", "Braille legend", "Moon token"], grant: "Moon prism", success: "The seed box opens. The moon prism catches the chime light and sharpens the signal." },
+            { label: "Escape chest", prompt: "Decode the wind chimes with the Morse reference card.", code: "TIDE", needs: ["chimes", "escape-chest", "morse-key", "Moon prism"], grant: "Escape key", success: "The escape chest opens. You take the Escape key, unlock the conservatory door, and step into the night." },
+          ],
+        },
+        {
+          name: "Sunken Map Room",
+          image: "assets/escape-map-room.svg",
+          description: "An old expedition atlas, a brass compass, a travel chest, and an atlas safe remain dry beneath the waves.",
+          hotspots: [
+            { name: "Expedition map", position: "8%,10%,37%,56%", clue: "The map marks four ports: EAST, SOUTH, WEST, NORTH. A note says: \"Begin where the compass points.\"", evidence: "map-order" },
+            { name: "Brass compass", position: "52%,12%,23%,42%", clue: "The compass needle points EAST, then swings SOUTH, WEST, and NORTH.", evidence: "compass-route" },
+            { name: "Travel chest", position: "56%,69%,19%,19%", clue: "The travel chest wants the first letters of the compass route.", evidence: "travel-chest" },
+            { name: "Atlas safe", position: "79%,59%,15%,27%", clue: "The atlas safe has a three-digit dial.", evidence: "atlas-safe" },
+          ],
+          puzzles: [
+            { label: "Travel chest", prompt: "Read the compass route in order.", code: "ESWN", needs: ["map-order", "compass-route", "travel-chest"], grant: "Navigator's ruler", success: "The chest opens. You take a navigator's ruler marked 6, 0, and 9." },
+            { label: "Atlas safe", prompt: "Use the three markings on the navigator's ruler.", code: "609", needs: ["atlas-safe", "Navigator's ruler"], grant: "Alchemy seal", success: "The atlas safe opens. Inside is an Alchemy seal for a hidden workshop." },
+          ],
+        },
+        {
+          name: "Alchemy Workshop",
+          image: "assets/escape-alchemy.svg",
+          description: "Colored flasks, an ingredient ledger, a reagent chest, and a sealed vault glow under a copper shelf.",
+          hotspots: [
+            { name: "Ingredient ledger", position: "10%,18%,20%,48%", clue: "The ledger reads: \"Azure + rose + gold = A R G. Arrange colors from left to right.\"", evidence: "ingredient-ledger" },
+            { name: "Flasks", position: "17%,46%,54%,25%", clue: "Three flasks sit left to right: azure, rose, gold.", evidence: "flask-order" },
+            { name: "Reagent chest", position: "11%,71%,18%,17%", clue: "The reagent chest accepts a three-letter formula.", evidence: "reagent-chest" },
+            { name: "Workshop vault", position: "74%,68%,22%,20%", clue: "The vault bears a strange sequence: -.-. .-. -.-- .--. -.", evidence: "workshop-vault" },
+          ],
+          puzzles: [
+            { label: "Reagent chest", prompt: "Use the ledger and flask order to make a formula.", code: "ARG", needs: ["ingredient-ledger", "flask-order", "reagent-chest", "Alchemy seal"], grant: "Crystal lens", success: "The reagent chest opens. You take a crystal lens that refracts tiny marks into sharp dots and dashes." },
+            { label: "Workshop vault", prompt: "Read the vault sequence with the Morse reference card.", code: "CRYPT", needs: ["workshop-vault", "morse-key", "Crystal lens"], grant: "Crypt sigil", success: "The vault opens. You uncover a Crypt sigil warm to the touch." },
+          ],
+        },
+        {
+          name: "Ember Crypt",
+          image: "assets/escape-crypt.svg",
+          description: "A final stone chamber holds an ember altar, a rune coffer, and a sealed gate leading outside.",
+          hotspots: [
+            { name: "Ember altar", position: "32%,17%,38%,55%", clue: "The Crypt sigil fits the altar. Four Braille cells glow: ⠛ ⠁ ⠞ ⠑.", evidence: "ember-altar", item: "Crypt sigil" },
+            { name: "Rune coffer", position: "8%,70%,18%,18%", clue: "The rune coffer accepts a four-letter word.", evidence: "rune-coffer" },
+            { name: "Stone tablet", position: "9%,12%,18%,62%", clue: "The tablet reads: \"The gate speaks in circles. Turn the wheel until PRRQ becomes the word you seek.\"", evidence: "stone-tablet" },
+            { name: "Final gate", position: "73%,68%,23%,20%", clue: "The gate needs a four-letter password.", evidence: "final-gate" },
+          ],
+          puzzles: [
+            { label: "Rune coffer", prompt: "Use the Braille legend to read the ember altar.", code: "GATE", needs: ["ember-altar", "rune-coffer", "Braille legend", "Crypt sigil"], grant: "Gate crystal", success: "The rune coffer opens. The Gate crystal makes the final mechanism hum." },
+            { label: "Final gate", prompt: "Use the cipher wheel and stone tablet to solve the gate word.", code: "MOON", needs: ["stone-tablet", "final-gate", "Cipher wheel", "Gate crystal"], grant: "Mirror key", success: "The final gate opens. Beyond it lies a hall of mirrors and a Mirror key." },
+          ],
+        },
+        {
+          name: "Hall of Mirrors",
+          image: "assets/escape-mirrors.svg",
+          description: "Three tall mirrors reflect a plinth, a silver coffer, and a distorted word on the far wall.",
+          hotspots: [
+            { name: "Left mirror", position: "8%,12%,25%,60%", clue: "The first mirror reverses the word: RORRIM.", evidence: "mirror-word" },
+            { name: "Silver coffer", position: "40%,70%,20%,17%", clue: "The coffer accepts a six-letter reflection.", evidence: "silver-coffer" },
+            { name: "Center mirror", position: "38%,8%,25%,65%", clue: "The center mirror has a row of symbols: 7 | 3 | 1.", evidence: "mirror-digits", item: "Mirror key" },
+            { name: "Mirror safe", position: "69%,12%,23%,60%", clue: "The mirror safe has a three-digit lock.", evidence: "mirror-safe" },
+          ],
+          puzzles: [
+            { label: "Silver coffer", prompt: "Read the reversed mirror word correctly.", code: "MIRROR", needs: ["mirror-word", "silver-coffer", "Mirror key"], grant: "Signal crystal", success: "The coffer opens. You find a Signal crystal that reacts to radio waves." },
+            { label: "Mirror safe", prompt: "Read the center mirror markings from left to right.", code: "731", needs: ["mirror-digits", "mirror-safe"], grant: "Radio key", success: "The safe opens. A Radio key unlocks the submerged signal station." },
+          ],
+        },
+        {
+          name: "Submerged Radio Station",
+          image: "assets/escape-radio.svg",
+          description: "A sonar screen, a brass radio console, a frequency chest, and a pressure vault wait below the tide line.",
+          hotspots: [
+            { name: "Sonar screen", position: "8%,18%,43%,48%", clue: "The sonar pulses: -... . .- -.-. --- -.  The Signal crystal makes every group clear.", evidence: "sonar-signal", item: "Signal crystal" },
+            { name: "Frequency chest", position: "55%,70%,16%,18%", clue: "The frequency chest accepts a six-letter broadcast.", evidence: "frequency-chest" },
+            { name: "Radio console", position: "55%,25%,32%,40%", clue: "Two brass dials are marked 4 and 2. A tag reads: \"Multiply, then add one.\"", evidence: "radio-dials", item: "Radio key" },
+            { name: "Pressure vault", position: "73%,70%,22%,18%", clue: "The pressure vault has a two-digit keypad.", evidence: "pressure-vault" },
+          ],
+          puzzles: [
+            { label: "Frequency chest", prompt: "Decode the sonar broadcast with the Morse reference card.", code: "BEACON", needs: ["sonar-signal", "frequency-chest", "morse-key", "Signal crystal"], grant: "Lighthouse lens", success: "The chest opens. You take a Lighthouse lens etched with a spiral." },
+            { label: "Pressure vault", prompt: "Use the console's dial instruction.", code: "9", needs: ["radio-dials", "pressure-vault", "Radio key"], grant: "Lighthouse key", success: "The vault releases a Lighthouse key and the stairs rise from the water." },
+          ],
+        },
+        {
+          name: "Lighthouse Vault",
+          image: "assets/escape-lighthouse.svg",
+          description: "At the top of the lighthouse, a keeper's desk, lens chamber, code chest, and final sea gate wait for a last solution.",
+          hotspots: [
+            { name: "Keeper's desk", position: "42%,35%,18%,28%", clue: "The keeper wrote: \"The spiral lens shifts a letter three steps forward. WAVE becomes ZDYH.\"", evidence: "keeper-note", item: "Lighthouse lens" },
+            { name: "Code chest", position: "8%,70%,22%,18%", clue: "The code chest asks for a four-letter encrypted word.", evidence: "code-chest" },
+            { name: "Lens chamber", position: "36%,8%,29%,30%", clue: "The Lighthouse key opens the chamber. Braille cells glow: ⠎ ⠁ ⠋ ⠑.", evidence: "lens-chamber", item: "Lighthouse key" },
+            { name: "Sea gate", position: "74%,67%,22%,22%", clue: "The sea gate accepts a four-letter password.", evidence: "sea-gate" },
+          ],
+          puzzles: [
+            { label: "Code chest", prompt: "Use the keeper's note and cipher wheel to reverse the encrypted word.", code: "WAVE", hint: "Turn the cipher wheel back three steps until ZDYH reads as a word.", needs: ["keeper-note", "code-chest", "Cipher wheel", "Lighthouse lens"], grant: "Sea compass", success: "The code chest opens. You take a Sea compass that points toward the final gate." },
+            { label: "Sea gate", prompt: "Read the lens chamber's Braille cells with the Braille legend.", code: "SAFE", needs: ["lens-chamber", "sea-gate", "Braille legend", "Lighthouse key", "Sea compass"], grant: "Freedom", success: "The sea gate opens onto the dawn. You have escaped all nine rooms!" },
+          ],
+        },
+      ];
+
+      const roomElement = document.querySelector("#room");
+      const tabsElement = document.querySelector("#room-tabs");
+      const messageElement = document.querySelector("#message");
+      const roomProgressElement = document.querySelector("#room-progress");
+      const lockProgressElement = document.querySelector("#lock-progress");
+      const inventoryProgressElement = document.querySelector("#inventory-progress");
+      let currentRoom;
+      let unlockedRoom;
+      let solved;
+      let evidence;
+      let inventory;
+      let currentClue;
+      let cipherShift;
+      let completedRoomCount;
+
+      function solvedCount() {
+        return solved.reduce((total, count) => total + count, 0);
+      }
+
+      function hasRequirement(requirement) {
+        return evidence.has(requirement) || inventory.includes(requirement);
+      }
+
+      function updateHud() {
+        roomProgressElement.textContent = `${currentRoom + 1} / ${rooms.length}`;
+        lockProgressElement.textContent = `${solvedCount()} / ${rooms.length * 2}`;
+        inventoryProgressElement.textContent = inventory.length ? inventory.join(", ") : "Empty";
+      }
+
+      function renderTabs() {
+        tabsElement.innerHTML = "";
+        rooms.forEach((room, index) => {
+          const tab = document.createElement("button");
+          tab.className = "room-tab";
+          tab.type = "button";
+          tab.textContent = `${index + 1}. ${room.name}`;
+          tab.disabled = index > unlockedRoom;
+          tab.classList.toggle("active", index === currentRoom);
+          tab.addEventListener("click", () => {
+            currentRoom = index;
+            currentClue = "";
+            renderRoom();
+          });
+          tabsElement.append(tab);
+        });
+      }
+
+      function inspect(hotspot) {
+        if (hotspot.item && !inventory.includes(hotspot.item)) {
+          currentClue = "That mechanism will not move until you find the matching item.";
+        } else {
+          evidence.add(hotspot.evidence);
+          currentClue = hotspot.clue;
+        }
+        renderRoom();
+      }
+
+      function tryCode(code) {
+        const room = rooms[currentRoom];
+        const puzzle = room.puzzles[solved[currentRoom]];
+        const missing = puzzle.needs.filter((requirement) => !hasRequirement(requirement));
+        if (missing.length) {
+          messageElement.textContent = "The lock markings are still unclear. Find and inspect more objects first.";
+          return;
+        }
+        if (code.toUpperCase() !== puzzle.code) {
+          messageElement.textContent = "The lock rejects that code. Recheck the clues and reference keys.";
+          return;
+        }
+
+        solved[currentRoom] += 1;
+        inventory.push(puzzle.grant);
+        messageElement.textContent = puzzle.success;
+        currentClue = "";
+        if (solved[currentRoom] === room.puzzles.length && currentRoom < rooms.length - 1) {
+          completedRoomCount = Math.max(completedRoomCount, currentRoom + 1);
+          window.localStorage.setItem("escape-room-completed-rooms", String(completedRoomCount));
+          unlockedRoom = currentRoom + 1;
+          currentRoom += 1;
+          messageElement.textContent += ` The ${rooms[currentRoom].name} is now open.`;
+        } else if (solved[currentRoom] === room.puzzles.length) {
+          completedRoomCount = rooms.length;
+          window.localStorage.setItem("escape-room-completed-rooms", String(completedRoomCount));
+        }
+        renderRoom();
+      }
+
+      function requirementName(requirement) {
+        const hotspot = rooms.flatMap((room) => room.hotspots).find(
+          (item) => item.evidence === requirement,
+        );
+        return hotspot ? hotspot.name : requirement;
+      }
+
+      function showHint(puzzle) {
+        const missing = puzzle.needs.filter((requirement) => !hasRequirement(requirement));
+        if (missing.length) {
+          messageElement.textContent = `Hint: You still need to inspect or collect ${missing.map(requirementName).join(", ")}.`;
+          return;
+        }
+
+        const hints = {
+          STAR: "The telescope uses dots and dashes. Use the Morse card and read each separated group as a letter.",
+          NOVA: "The cabinet displays four Braille cells. Use the brass card from the box to read them left to right.",
+          815: "The clock hands give the digits. Follow the pendulum instruction about punctuation.",
+          MOON: "Set the cipher wheel three steps back and watch the decoded text under the wheel.",
+          GROW: "The moon panel uses Braille; its four cells spell the seed box answer.",
+          TIDE: "The chimes have four Morse groups. Translate them with the reference card in order.",
+          ESWN: "Start with the compass direction, then follow every direction named by the map.",
+          609: "Only three large markings appear on the navigator's ruler. Enter them in reading order.",
+          ARG: "Use the ledger's first letters, then confirm the left-to-right flask order.",
+          CRYPT: "The vault's Morse groups form a five-letter word. The crystal lens clarifies the sequence.",
+          GATE: "The glowing Braille cells on the altar form the coffer's four-letter answer.",
+        };
+        messageElement.textContent = `Hint: ${puzzle.hint || hints[puzzle.code] || puzzle.prompt}`;
+      }
+
+      function bypassRoom() {
+        const room = rooms[currentRoom];
+        room.hotspots.forEach((hotspot) => evidence.add(hotspot.evidence));
+        room.puzzles.forEach((puzzle) => {
+          if (!inventory.includes(puzzle.grant)) inventory.push(puzzle.grant);
+        });
+        solved[currentRoom] = room.puzzles.length;
+        unlockedRoom = Math.max(unlockedRoom, currentRoom + 1);
+        messageElement.textContent = `${room.name} bypassed. Its previous rewards and reference clues are available.`;
+        if (currentRoom < rooms.length - 1) currentRoom += 1;
+        renderRoom();
+      }
+
+      function decodeCaesar(text, shift) {
+        return [...text].map((character) => {
+          const code = character.charCodeAt(0);
+          return String.fromCharCode((code - 65 - shift + 26) % 26 + 65);
+        }).join("");
+      }
+
+      function renderReferenceKeys() {
+        const references = [
+          { key: "morse-key", title: "Morse reference card", image: "assets/morse-key.svg" },
+          { key: "Braille legend", title: "Braille legend", image: "assets/braille-key.svg" },
+          { key: "Cipher wheel", title: "Cipher wheel", image: "assets/cipher-wheel.svg" },
+          { key: "Navigator's ruler", title: "Navigator's ruler", image: "assets/navigator-ruler.svg" },
+        ].filter((reference) => hasRequirement(reference.key));
+        if (!references.length) return null;
+
+        const tray = document.createElement("div");
+        tray.className = "reference-keys";
+        references.forEach((reference) => {
+          const figure = document.createElement("figure");
+          figure.className = "reference-key";
+          const image = document.createElement("img");
+          image.src = reference.image;
+          image.alt = reference.title;
+          if (reference.key === "Cipher wheel") {
+            image.className = "cipher-wheel-image";
+            image.style.transform = `rotate(${-cipherShift * (360 / 26)}deg)`;
+          }
+          const caption = document.createElement("figcaption");
+          caption.textContent = reference.title;
+          figure.append(image, caption);
+          if (reference.key === "Cipher wheel") {
+            const controls = document.createElement("div");
+            controls.className = "cipher-controls";
+            const backButton = document.createElement("button");
+            backButton.type = "button";
+            backButton.textContent = "Turn back";
+            backButton.addEventListener("click", () => {
+              cipherShift = (cipherShift + 1) % 26;
+              renderRoom();
+            });
+            const forwardButton = document.createElement("button");
+            forwardButton.type = "button";
+            forwardButton.textContent = "Turn forward";
+            forwardButton.addEventListener("click", () => {
+              cipherShift = (cipherShift + 25) % 26;
+              renderRoom();
+            });
+            controls.append(backButton, forwardButton);
+            const readout = document.createElement("p");
+            readout.className = "cipher-readout";
+            readout.textContent = `Shift ${cipherShift}: PRRQ -> ${decodeCaesar("PRRQ", cipherShift)} | ZDYH -> ${decodeCaesar("ZDYH", cipherShift)}`;
+            figure.append(controls, readout);
+          }
+          tray.append(figure);
+        });
+        return tray;
+      }
+
+      function renderRoom() {
+        const room = rooms[currentRoom];
+        const puzzle = room.puzzles[solved[currentRoom]];
+        roomElement.innerHTML = "";
+        const title = document.createElement("h2");
+        title.className = "room-title";
+        title.textContent = room.name;
+        const description = document.createElement("p");
+        description.className = "room-description";
+        description.textContent = room.description;
+        const scene = document.createElement("div");
+        scene.className = "scene";
+        const image = document.createElement("img");
+        image.src = room.image;
+        image.alt = `${room.name} illustration`;
+        scene.append(image);
+        room.hotspots.forEach((hotspot) => {
+          const button = document.createElement("button");
+          button.className = "hotspot";
+          button.type = "button";
+          button.textContent = hotspot.name;
+          const [left, top, width, height] = hotspot.position.split(",");
+          Object.assign(button.style, { left, top, width, height });
+          button.addEventListener("click", () => inspect(hotspot));
+          scene.append(button);
+        });
+        const clue = document.createElement("div");
+        clue.className = "clue";
+        clue.textContent = currentClue || "Click objects in the room to inspect them. Keep track of every reference key.";
+        roomElement.append(title, description, scene, clue);
+        const referenceKeys = renderReferenceKeys();
+        if (referenceKeys) roomElement.append(referenceKeys);
+
+        if (currentRoom < completedRoomCount && solved[currentRoom] === 0) {
+          const bypass = document.createElement("button");
+          bypass.className = "bypass";
+          bypass.type = "button";
+          bypass.textContent = "Bypass previously cleared room";
+          bypass.addEventListener("click", bypassRoom);
+          roomElement.append(bypass);
+        }
+
+        if (puzzle) {
+          const panel = document.createElement("div");
+          panel.className = "puzzle";
+          const heading = document.createElement("h3");
+          heading.textContent = `Locked: ${puzzle.label}`;
+          const prompt = document.createElement("p");
+          prompt.textContent = puzzle.prompt;
+          const form = document.createElement("form");
+          form.className = "code-form";
+          form.innerHTML = `
+            <label for="code">Code</label>
+            <input id="code" maxlength="8" autocomplete="off" aria-label="Enter code">
+            <button class="unlock" type="submit">Unlock</button>
+            <button class="hint" type="button">Hint</button>
+          `;
+          form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            tryCode(form.querySelector("#code").value.trim());
+          });
+          form.querySelector(".hint").addEventListener("click", () => showHint(puzzle));
+          panel.append(heading, prompt, form);
+          roomElement.append(panel);
+        } else {
+          const complete = document.createElement("div");
+          complete.className = "inventory";
+          complete.textContent = currentRoom === rooms.length - 1
+            ? "You escaped the house. Start again to solve a new escape."
+            : "All locks in this room are open.";
+          roomElement.append(complete);
+        }
+        renderTabs();
+        updateHud();
+      }
+
+      function resetGame() {
+        currentRoom = 0;
+        unlockedRoom = 0;
+        solved = Array(rooms.length).fill(0);
+        evidence = new Set();
+        inventory = [];
+        currentClue = "";
+        cipherShift = 0;
+        completedRoomCount = Math.min(
+          rooms.length,
+          Math.max(0, Number(window.localStorage.getItem("escape-room-completed-rooms") || 0)),
+        );
+        messageElement.textContent = "Search the observatory. Some clues only make sense after you open another box.";
+        renderRoom();
+      }
+
+      document.querySelector("#restart").addEventListener("click", resetGame);
+      resetGame();
+    </script>
+  </body>
+</html>

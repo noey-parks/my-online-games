@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Typing Sprint | My Online Games</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        align-items: center;
+        background: linear-gradient(135deg, #1c2541, #0b132b);
+        color: #ffffff;
+        display: flex;
+        justify-content: center;
+        margin: 0;
+        min-height: 100vh;
+        padding: 1.5rem;
+      }
+
+      main {
+        max-width: 48rem;
+        text-align: center;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: clamp(2.25rem, 8vw, 4rem);
+        margin: 0;
+      }
+
+      .subtitle {
+        color: #c9d6e7;
+        margin: 0.5rem 0 1.5rem;
+      }
+
+      .stats {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 1rem;
+      }
+
+      .stat {
+        background: #243b5a;
+        border-radius: 0.75rem;
+        padding: 0.8rem;
+      }
+
+      .stat-label {
+        color: #b9c8dc;
+        display: block;
+        font-size: 0.8rem;
+        margin-bottom: 0.2rem;
+        text-transform: uppercase;
+      }
+
+      .stat-value {
+        font-size: clamp(1.3rem, 4vw, 2rem);
+        font-weight: bold;
+      }
+
+      #words {
+        background: #ffffff;
+        border-radius: 1rem;
+        color: #3b4a62;
+        font-size: clamp(1.2rem, 3vw, 1.7rem);
+        line-height: 1.8;
+        margin-bottom: 1rem;
+        min-height: 11rem;
+        padding: 1.25rem;
+        text-align: left;
+      }
+
+      .word {
+        display: inline-block;
+        margin-right: 0.6rem;
+      }
+
+      .current {
+        background: #f9c74f;
+        border-radius: 0.3rem;
+        color: #162b1a;
+        padding: 0 0.2rem;
+      }
+
+      .complete {
+        color: #2c8b57;
+      }
+
+      .incorrect {
+        color: #d1495b;
+        text-decoration: line-through;
+      }
+
+      #typing-input {
+        border: 0.2rem solid transparent;
+        border-radius: 0.65rem;
+        font: inherit;
+        font-size: 1.25rem;
+        padding: 0.9rem;
+        width: 100%;
+      }
+
+      #typing-input:focus {
+        border-color: #f9c74f;
+        outline: 0;
+      }
+
+      #message {
+        color: #c9d6e7;
+        font-weight: bold;
+        min-height: 1.5em;
+        margin: 0.8rem 0;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+      }
+
+      button,
+      a {
+        border: 0;
+        border-radius: 0.65rem;
+        cursor: pointer;
+        font: inherit;
+        font-weight: bold;
+        padding: 0.8rem 1.1rem;
+      }
+
+      button {
+        background: #f9c74f;
+        color: #162b1a;
+      }
+
+      button:hover,
+      button:focus-visible {
+        background: #ffffff;
+      }
+
+      a {
+        color: #ffffff;
+      }
+
+      @media (max-width: 28rem) {
+        .stats {
+          gap: 0.4rem;
+        }
+
+        .stat {
+          padding: 0.55rem 0.3rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Typing Sprint</h1>
+      <p class="subtitle">Type as many words as you can in 60 seconds.</p>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Time</span>
+          <span class="stat-value" id="time">60</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">WPM</span>
+          <span class="stat-value" id="wpm">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Accuracy</span>
+          <span class="stat-value" id="accuracy">100%</span>
+        </div>
+      </div>
+      <div id="words" aria-label="Words to type"></div>
+      <input id="typing-input" type="text" autocomplete="off" disabled placeholder="Press Start, then type the highlighted word">
+      <p id="message" aria-live="polite">Press Start to begin your sprint.</p>
+      <div class="controls">
+        <button id="start" type="button">Start sprint</button>
+        <a href="index.html">All games</a>
+      </div>
+    </main>
+
+    <script>
+      const wordBank = [
+        "amber", "apple", "arrow", "beach", "blaze", "bloom", "brave", "breeze",
+        "bridge", "bright", "candle", "castle", "circle", "cloud", "comet", "crystal",
+        "dance", "dawn", "drift", "dream", "eagle", "ember", "forest", "galaxy",
+        "garden", "golden", "harbor", "horizon", "island", "jungle", "lantern", "light",
+        "maple", "meadow", "meteor", "moon", "mountain", "ocean", "orchard", "pebble",
+        "planet", "prairie", "raven", "river", "rocket", "sail", "shadow", "silver",
+        "snow", "spark", "spring", "star", "stone", "summer", "sunset", "thunder",
+        "trail", "valley", "violet", "water", "willow", "winter", "wonder",
+      ];
+      const duration = 60;
+      const wordsElement = document.querySelector("#words");
+      const inputElement = document.querySelector("#typing-input");
+      const timeElement = document.querySelector("#time");
+      const wpmElement = document.querySelector("#wpm");
+      const accuracyElement = document.querySelector("#accuracy");
+      const messageElement = document.querySelector("#message");
+      const startButton = document.querySelector("#start");
+      let words;
+      let wordIndex;
+      let correctWords;
+      let attemptedWords;
+      let startedAt;
+      let timer;
+      let running;
+
+      function buildWords() {
+        return Array.from(
+          { length: 200 },
+          () => wordBank[Math.floor(Math.random() * wordBank.length)],
+        );
+      }
+
+      function updateStats() {
+        const elapsedMinutes = startedAt
+          ? Math.min((Date.now() - startedAt) / 60000, duration / 60)
+          : 0;
+        const wpm = elapsedMinutes > 0 ? Math.round(correctWords / elapsedMinutes) : 0;
+        const accuracy = attemptedWords > 0 ? Math.round((correctWords / attemptedWords) * 100) : 100;
+        wpmElement.textContent = wpm;
+        accuracyElement.textContent = `${accuracy}%`;
+      }
+
+      function renderWords() {
+        wordsElement.innerHTML = "";
+        words.slice(wordIndex, wordIndex + 24).forEach((word, index) => {
+          const wordElement = document.createElement("span");
+          wordElement.className = "word";
+          wordElement.textContent = word;
+          if (index === 0) {
+            wordElement.classList.add("current");
+          }
+          wordsElement.append(wordElement);
+        });
+      }
+
+      function finishSprint() {
+        running = false;
+        window.clearInterval(timer);
+        inputElement.disabled = true;
+        updateStats();
+        messageElement.textContent = `Time! You typed ${correctWords} words at ${wpmElement.textContent} WPM.`;
+        startButton.textContent = "Start again";
+      }
+
+      function tick() {
+        const secondsLeft = Math.max(0, Math.ceil(duration - (Date.now() - startedAt) / 1000));
+        timeElement.textContent = secondsLeft;
+        updateStats();
+        if (secondsLeft === 0) {
+          finishSprint();
+        }
+      }
+
+      function startSprint() {
+        words = buildWords();
+        wordIndex = 0;
+        correctWords = 0;
+        attemptedWords = 0;
+        startedAt = Date.now();
+        running = true;
+        inputElement.disabled = false;
+        inputElement.value = "";
+        timeElement.textContent = duration;
+        messageElement.textContent = "Go!";
+        startButton.textContent = "Restart sprint";
+        renderWords();
+        updateStats();
+        window.clearInterval(timer);
+        timer = window.setInterval(tick, 100);
+        inputElement.focus();
+      }
+
+      function submitWord() {
+        const typedWord = inputElement.value.trim();
+        if (!typedWord || !running) {
+          return;
+        }
+
+        attemptedWords += 1;
+        const correct = typedWord === words[wordIndex];
+        if (correct) {
+          correctWords += 1;
+          messageElement.textContent = "Nice!";
+        } else {
+          messageElement.textContent = `"${typedWord}" should be "${words[wordIndex]}".`;
+        }
+
+        wordIndex += 1;
+        inputElement.value = "";
+        renderWords();
+        updateStats();
+      }
+
+      inputElement.addEventListener("keydown", (event) => {
+        if (event.key === " " || event.key === "Enter") {
+          event.preventDefault();
+          submitWord();
+        }
+      });
+
+      startButton.addEventListener("click", startSprint);
+      words = buildWords();
+      wordIndex = 0;
+      correctWords = 0;
+      attemptedWords = 0;
+      renderWords();
+    </script>
+  </body>
+</html>

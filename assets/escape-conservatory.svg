@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="title">
+  <title>Moonlit conservatory with silver plants, a moon panel, seed box, wind chimes, and escape chest</title>
+  <defs><linearGradient id="moon" x2="0" y2="1"><stop stop-color="#183a52"/><stop offset="1" stop-color="#101e2f"/></linearGradient></defs>
+  <rect width="800" height="480" fill="url(#moon)"/>
+  <path d="M0 353h800v127H0z" fill="#18372f"/>
+  <path d="M70 35h260v270H70zm400 0h260v270H470z" fill="none" stroke="#9ed7d0" stroke-width="12"/>
+  <circle cx="610" cy="100" r="45" fill="#f3efc7"/>
+  <g stroke="#a5ddd3" stroke-width="12" fill="none"><path d="M170 352c0-110 55-155 78-205m-62 205c0-90-25-132-60-167m110 167c0-82 49-112 89-139"/><path d="M505 352c0-106 58-152 94-205m-52 205c0-87-20-126-56-168"/></g>
+  <g fill="#c4f1e9"><ellipse cx="248" cy="146" rx="28" ry="12"/><ellipse cx="126" cy="184" rx="25" ry="11"/><ellipse cx="325" cy="211" rx="26" ry="11"/><ellipse cx="599" cy="148" rx="28" ry="12"/></g>
+  <circle cx="397" cy="220" r="54" fill="#496a68" stroke="#d8f5e9" stroke-width="7"/><path d="M397 177a43 43 0 1 0 0 86 34 34 0 1 1 0-86z" fill="#f3efc7"/>
+  <path d="M305 355h115v66H305z" fill="#7a512d" stroke="#e6c789" stroke-width="7"/>
+  <path d="M655 85v104m-30-104v104m60-104v104" stroke="#e2d19a" stroke-width="6"/><circle cx="655" cy="205" r="18" fill="#d8e4dd"/>
+  <path d="M535 342h155v91H535z" fill="#49301f" stroke="#d4b166" stroke-width="8"/>
+  <text x="612" y="398" fill="#f8e5b6" font-family="serif" font-size="24" text-anchor="middle">ESCAPE</text>
+</svg>

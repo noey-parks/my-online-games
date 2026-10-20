@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="title">
+  <title>Clockwork library with bookcases, a grand clock, clock cabinet, and book safe</title>
+  <rect width="800" height="480" fill="#543724"/>
+  <rect y="350" width="800" height="130" fill="#29170f"/>
+  <g fill="#2d1c13" stroke="#b98a4b" stroke-width="8"><path d="M36 45h220v305H36z"/><path d="M550 45h214v305H550z"/></g>
+  <g stroke-width="15"><path d="M62 90h170m-170 65h170m-170 65h170m-170 65h170" stroke="#c95a47"/><path d="M578 90h160m-160 65h160m-160 65h160m-160 65h160" stroke="#39769c"/></g>
+  <g fill="#e2bd67" stroke="#35251d" stroke-width="10"><circle cx="397" cy="152" r="92"/><path d="M397 82v70l53 30" fill="none"/></g>
+  <path d="M338 350h120v-130H338z" fill="#75451f" stroke="#e0b75d" stroke-width="7"/>
+  <text x="398" y="170" fill="#38271d" font-family="serif" font-size="30" text-anchor="middle">8:15</text>
+  <path d="M475 323h80v65h-80z" fill="#422619" stroke="#ba8a4d" stroke-width="7"/>
+  <text x="515" y="365" fill="#f3d9a1" font-family="serif" font-size="20" text-anchor="middle">SAFE</text>
+</svg>
